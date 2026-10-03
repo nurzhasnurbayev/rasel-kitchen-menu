@@ -1,0 +1,47 @@
+{
+	"name": "rasel-kitchen-menu",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=22.12"
+	},
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "npm run build && wrangler dev",
+		"deploy": "npm run build && wrangler deploy",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "vitest run",
+		"format": "prettier --write .",
+		"lint": "prettier --check .",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate:local": "wrangler d1 migrations apply DB --local",
+		"db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+		"db:reset:local": "node -e \"require('node:fs').rmSync('.wrangler/state/v3/d1', { recursive: true, force: true })\" && npm run db:migrate:local"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.45.3"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20261003.1",
+		"@sveltejs/adapter-cloudflare": "^7.2.9",
+		"@sveltejs/kit": "^2.70.3",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@tailwindcss/vite": "^4.3.3",
+		"drizzle-kit": "^0.31.11",
+		"esbuild": "^0.28.2",
+		"prettier": "^3.9.9",
+		"prettier-plugin-svelte": "^4.1.1",
+		"prettier-plugin-tailwindcss": "^0.8.1",
+		"svelte": "^5.57.1",
+		"svelte-check": "^4.7.6",
+		"tailwindcss": "^4.3.3",
+		"typescript": "^6.0.3",
+		"vite": "^8.3.2",
+		"vitest": "^5.0.3",
+		"wrangler": "^4.147.0"
+	}
+}

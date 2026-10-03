@@ -1,0 +1,70 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import { cafe } from '$lib/config';
+	import { LANGS, ui } from '$lib/i18n';
+	import CafeInfo from '$lib/menu/CafeInfo.svelte';
+	import CategoryNav from '$lib/menu/CategoryNav.svelte';
+	import { enhanceScriptTag } from '$lib/menu/enhance-script';
+	import MenuSection from '$lib/menu/MenuSection.svelte';
+	import SiteFooter from '$lib/menu/SiteFooter.svelte';
+	import TopBar from '$lib/menu/TopBar.svelte';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
+
+	const t = $derived(ui[data.lang]);
+	const origin = $derived(page.url.origin);
+	const title = $derived(`${t.menu} — ${cafe.name}`);
+	const description = $derived(t.metaDescription(cafe.name));
+</script>
+
+<svelte:head>
+	<title>{title}</title>
+	<meta name="description" content={description} />
+	<link rel="canonical" href="{origin}/{data.lang}" />
+	{#each LANGS as lang (lang)}
+		<link rel="alternate" hreflang={lang} href="{origin}/{lang}" />
+	{/each}
+	<link rel="alternate" hreflang="x-default" href="{origin}/" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content={cafe.name} />
+	<meta property="og:title" content={title} />
+	<meta property="og:description" content={description} />
+	<meta property="og:url" content="{origin}/{data.lang}" />
+	<meta property="og:locale" content={t.locale} />
+	{#each LANGS.filter((lang) => lang !== data.lang) as lang (lang)}
+		<meta property="og:locale:alternate" content={ui[lang].locale} />
+	{/each}
+</svelte:head>
+
+<a
+	href="#menu"
+	class="sr-only z-50 rounded-full bg-ink px-4 py-2 text-paper focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+>
+	{t.skipToMenu}
+</a>
+
+<TopBar lang={data.lang} />
+<CafeInfo lang={data.lang} />
+
+<main id="menu">
+	{#if data.menu.length > 0}
+		<CategoryNav categories={data.menu} lang={data.lang} />
+		<div class="mx-auto max-w-2xl space-y-10 px-4 pt-7">
+			{#each data.menu as category (category.id)}
+				<MenuSection {category} lang={data.lang} />
+			{/each}
+		</div>
+	{:else}
+		<p class="mx-auto max-w-2xl border-t border-line px-4 pt-10 text-center text-lg text-ink-soft">
+			{t.menuEmpty}
+		</p>
+	{/if}
+</main>
+
+<SiteFooter lang={data.lang} />
+<div data-menu-end aria-hidden="true" class="h-px"></div>
+
+<!-- Inline, so the enhancement costs no extra request. -->
+{@html enhanceScriptTag}
