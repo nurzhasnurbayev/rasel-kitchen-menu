@@ -1,23 +1,10 @@
-import { DatabaseSync } from 'node:sqlite';
 import { describe, expect, it } from 'vitest';
+import { migratedSqlite as migratedDb } from './test-db';
 
 /*
  * Applies the real migration files (schema + menu seed), in order, to an in-memory SQLite
  * database (D1 is SQLite) and checks the seeded menu and the schema's constraints.
  */
-
-const migrations = import.meta.glob<string>('/drizzle/migrations/*.sql', {
-	query: '?raw',
-	import: 'default',
-	eager: true
-});
-
-function migratedDb() {
-	const db = new DatabaseSync(':memory:');
-	db.exec('PRAGMA foreign_keys = ON'); // D1 always enforces foreign keys
-	for (const file of Object.keys(migrations).sort()) db.exec(migrations[file]);
-	return db;
-}
 
 const column = (rows: Record<string, unknown>[], name: string) => rows.map((row) => row[name]);
 

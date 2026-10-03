@@ -1,0 +1,4 @@
+# Copy to .dev.vars to try the cache purge or the Access check with `npm run preview`.
+# Not needed for `npm run dev`: there the admin panel is open and purging is skipped.
+CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_ZONE_ID=

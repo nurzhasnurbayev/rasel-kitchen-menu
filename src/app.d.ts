@@ -10,11 +10,23 @@ declare global {
 		PHOTOS: R2Bucket;
 		/** The Worker's static assets (assets → binding "ASSETS"). Used by the adapter. */
 		ASSETS: Fetcher;
+
+		/** Cloudflare Access team domain, e.g. "rasel.cloudflareaccess.com" (vars in wrangler.jsonc). */
+		ACCESS_TEAM_DOMAIN?: string;
+		/** Application Audience (AUD) tag of the Access application for /admin (vars). */
+		ACCESS_AUD?: string;
+		/** Secret: API token with Zone → Cache Purge permission, to purge /kk and /ru after saves. */
+		CLOUDFLARE_API_TOKEN?: string;
+		/** Secret: ID of the zone (domain) the menu is served on. */
+		CLOUDFLARE_ZONE_ID?: string;
 	}
 
 	namespace App {
 		// interface Error {}
-		// interface Locals {}
+		interface Locals {
+			/** Set for /admin requests that passed the Access check (email is null in local dev). */
+			admin?: { email: string | null };
+		}
 		// interface PageData {}
 		// interface PageState {}
 

@@ -1,4 +1,12 @@
 @import 'tailwindcss';
+@import './theme.css';
+
+/*
+ * The admin panel has its own stylesheet (routes/admin/admin.css), so its classes do not add
+ * weight to the menu that guests download.
+ */
+@source not './lib/admin';
+@source not './routes/admin';
 
 /*
  * Self-hosted fonts, trimmed to Latin + Russian + Kazakh (Ә Ғ Қ Ң Ө Ұ Ү Һ І) + ₸.
@@ -18,41 +26,6 @@
 	font-weight: 700;
 	font-display: swap;
 	src: url('./lib/assets/fonts/alegreya-bold.woff2') format('woff2');
-}
-
-@theme {
-	--font-sans:
-		'Onest', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-		sans-serif;
-	--font-display: 'Alegreya', ui-serif, Georgia, 'Times New Roman', serif;
-
-	/* Warm "menu paper" palette. All text pairs meet WCAG AA contrast. */
-	--color-paper: #f6efe3;
-	--color-surface: #fffaf3;
-	--color-ink: #2a1c13;
-	--color-ink-soft: #5e4838;
-	--color-ink-muted: #76665a;
-	--color-line: #e3d4bd;
-	--color-accent: #b04220;
-	--color-accent-ink: #9c3a1b;
-	--color-on-accent: #ffffff;
-	--color-badge: #ece3d5;
-}
-
-/* Evening palette for phones in dark mode. */
-@media (prefers-color-scheme: dark) {
-	:root {
-		--color-paper: #1d1612;
-		--color-surface: #28201a;
-		--color-ink: #f4eadd;
-		--color-ink-soft: #cdbba7;
-		--color-ink-muted: #a8988a;
-		--color-line: #3d3027;
-		--color-accent: #e07a4f;
-		--color-accent-ink: #ee9268;
-		--color-on-accent: #1d1612;
-		--color-badge: #3a2e26;
-	}
 }
 
 @layer base {
@@ -100,14 +73,5 @@
 		:root {
 			--topbar-stick: 0px;
 		}
-	}
-}
-
-@custom-variant short (@media (max-height: 480px));
-
-@utility scrollbar-none {
-	scrollbar-width: none;
-	&::-webkit-scrollbar {
-		display: none;
 	}
 }

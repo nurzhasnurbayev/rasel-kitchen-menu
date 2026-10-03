@@ -19,6 +19,17 @@
 	},
 	"upload_source_maps": true,
 
+	// Cloudflare Access for /admin (see "Admin panel" in the README). Until both are filled in,
+	// /admin answers 503 in production. Not secret: they only identify the Access application.
+	"vars": {
+		// e.g. "rasel.cloudflareaccess.com" (Zero Trust → Settings → Custom Pages → Team domain)
+		"ACCESS_TEAM_DOMAIN": "",
+		// Zero Trust → Access → Applications → (the /admin app) → Overview → Application Audience (AUD) Tag
+		"ACCESS_AUD": ""
+	},
+	// Secrets (set with `npx wrangler secret put <NAME>`, never in this file):
+	// CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID, used to purge the menu cache after admin saves.
+
 	"d1_databases": [
 		{
 			"binding": "DB",
