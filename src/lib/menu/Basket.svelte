@@ -7,7 +7,7 @@
 		items: BasketMenuItem[];
 		t: Pick<
 			Dictionary,
-			'priceOnRequest' | 'soldOut' | 'addToBasket' | 'removeOne' | 'confirmClear'
+			'priceOnRequest' | 'soldOut' | 'addToBasket' | 'removeOne' | 'inBasket' | 'confirmClear'
 		>;
 	}
 </script>
@@ -15,6 +15,7 @@
 <script lang="ts">
 	import { cafe } from '$lib/config';
 	import { ui, type Lang } from '$lib/i18n';
+	import BasketControl from './BasketControl.svelte';
 	import type { MenuCategory } from './types';
 
 	let { menu, lang }: { menu: MenuCategory[]; lang: Lang } = $props();
@@ -29,6 +30,7 @@
 			soldOut: t.soldOut,
 			addToBasket: t.addToBasket,
 			removeOne: t.removeOne,
+			inBasket: t.inBasket,
 			confirmClear: t.confirmClear
 		}
 	});
@@ -145,6 +147,8 @@
 		</form>
 	</div>
 </dialog>
+
+<template data-basket-ctl-template><BasketControl /></template>
 
 <template data-basket-line-template>
 	<li class="flex items-center gap-3 py-3 data-sold-out:text-ink-muted">

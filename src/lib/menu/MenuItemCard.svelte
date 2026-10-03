@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { ui, type Lang } from '$lib/i18n';
 	import { photoUrl } from '$lib/photos';
-	import BasketControl from './BasketControl.svelte';
 	import Price from './Price.svelte';
 	import type { MenuItem } from './types';
 
@@ -12,7 +11,6 @@
 	const single = $derived(item.variants.length === 1 ? item.variants[0] : null);
 	// Sold-out dishes get no basket buttons.
 	const orderable = $derived(item.available);
-	const fullName = (label: string | null) => (label ? `${item.name}, ${label}` : item.name);
 </script>
 
 <li
@@ -55,13 +53,9 @@
 						<Price price={single.price} {lang} />
 					</p>
 					{#if orderable}
-						<!-- The negative margin keeps the 40px button from making the card taller. -->
-						<BasketControl
-							variantId={single.id}
-							name={fullName(single.label)}
-							{lang}
-							class="-my-2 self-center"
-						/>
+						<!-- basket-ui.ts puts the + button here. The negative margin keeps the 40px button
+						     from making the card taller. -->
+						<span data-basket-slot={single.id} class="-my-2 self-center empty:hidden"></span>
 					{/if}
 				</div>
 			{/if}
@@ -78,17 +72,20 @@
 		{#if item.variants.length > 1}
 			<ul class="mt-2 space-y-1">
 				{#each item.variants as variant (variant.id)}
-					<li class="flex items-center gap-2.5">
-						<div class="flex min-w-0 flex-1 items-baseline gap-2">
-							<span class="text-ink-soft group-data-sold-out:text-ink-muted">{variant.label}</span>
+					<!-- Wraps on narrow screens, so an open − n + never covers the price. -->
+					<li class="flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1">
+						<div class="flex min-w-[min(100%,9.5rem)] flex-1 items-baseline gap-2">
+							<span class="whitespace-nowrap text-ink-soft group-data-sold-out:text-ink-muted"
+								>{variant.label}</span
+							>
 							<span
 								aria-hidden="true"
-								class="min-w-6 flex-1 -translate-y-[0.3em] border-b-2 border-dotted border-line"
+								class="min-w-3 flex-1 -translate-y-[0.3em] border-b-2 border-dotted border-line"
 							></span>
-							<Price price={variant.price} {lang} />
+							<span class="shrink-0"><Price price={variant.price} {lang} /></span>
 						</div>
 						{#if orderable}
-							<BasketControl variantId={variant.id} name={fullName(variant.label)} {lang} />
+							<span data-basket-slot={variant.id} class="empty:hidden"></span>
 						{/if}
 					</li>
 				{/each}

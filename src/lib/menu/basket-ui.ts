@@ -2,9 +2,10 @@
  * The guest basket on the menu page, as progressive enhancement. Bundled, minified and inlined
  * next to enhance.js (see enhance-script.ts), so it costs no extra request and ships no framework.
  *
- * The markup (buttons, bar, dialogs, row templates) is rendered on the server by BasketControl.svelte
- * and Basket.svelte, hidden. This script reveals it, keeps it in sync with the basket, and stores
- * the basket in localStorage. The basket logic itself is in $lib/basket/basket.ts.
+ * The markup (bar, dialogs, templates for the buttons and rows) is rendered on the server by
+ * Basket.svelte, hidden; the menu cards only mark where buttons go ([data-basket-slot]). This
+ * script fills in the buttons, keeps everything in sync with the basket, and stores the basket in
+ * localStorage. The basket logic itself is in $lib/basket/basket.ts.
  *
  * Imports must be relative: esbuild bundles this file without SvelteKit's aliases.
  */
@@ -83,7 +84,28 @@ import type { BasketPageData } from './Basket.svelte';
 
 	// --- Rendering ---------------------------------------------------------------------------------
 
-	const controls = [...document.querySelectorAll<HTMLElement>('[data-basket-ctl]')];
+	const fullName = ({ name, label }: { name: string; label: string | null }) =>
+		label ? `${name}, ${label}` : name;
+
+	// One + / − n + control per orderable dish or size, cloned from the template into its slot.
+	const controlTemplate = $<HTMLTemplateElement>('[data-basket-ctl-template]')!;
+	const controls: HTMLElement[] = [];
+	for (const slot of document.querySelectorAll<HTMLElement>('[data-basket-slot]')) {
+		const variantId = Number(slot.dataset.basketSlot);
+		const entry = menu.get(variantId);
+		if (!entry || !canAdd(menu, variantId)) continue;
+		const control = controlTemplate.content.firstElementChild!.cloneNode(true) as HTMLElement;
+		const name = fullName({ name: entry.item.name, label: entry.variant.label });
+		const inc = $('[data-basket-inc]', control)!;
+		const dec = $('[data-basket-dec]', control)!;
+		control.dataset.basketCtl = String(variantId);
+		inc.dataset.basketInc = dec.dataset.basketDec = String(variantId);
+		inc.setAttribute('aria-label', `${t.addToBasket}: ${name}`);
+		dec.setAttribute('aria-label', `${t.removeOne}: ${name}`);
+		setText(control, '[data-qty-label]', `${t.inBasket}:`);
+		controls.push(control);
+		slot.append(control);
+	}
 	const lineList = $('[data-basket-lines]', basketDialog)!;
 	const lineTemplate = $<HTMLTemplateElement>('[data-basket-line-template]')!;
 	const waiterList = $('[data-waiter-lines]', waiterDialog)!;
@@ -91,9 +113,6 @@ import type { BasketPageData } from './Basket.svelte';
 
 	const priceText = (price: number | null) =>
 		price === null ? t.priceOnRequest : formatPrice(price);
-	const fullName = (line: BasketViewLine) =>
-		line.label ? `${line.name}, ${line.label}` : line.name;
-
 	function setText(root: ParentNode, selector: string, text: string) {
 		const element = $(selector, root);
 		if (element) element.textContent = text;
@@ -278,6 +297,5 @@ import type { BasketPageData } from './Basket.svelte';
 		}
 	});
 
-	for (const control of controls) control.hidden = false;
 	render();
 })();
