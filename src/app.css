@@ -85,6 +85,16 @@
 		outline-offset: 2px;
 	}
 
+	/* While the basket bar is shown (set by basket-ui.ts), keep the end of the page above it. */
+	html[data-basket] body {
+		padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+	}
+
+	/* No page scrolling behind an open basket or waiter view. */
+	html:has(dialog[open]) {
+		overflow: hidden;
+	}
+
 	/* On short (landscape) screens only the category tabs stay pinned; see the `short` variant. */
 	@media (max-height: 480px) {
 		:root {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ui, type Lang } from '$lib/i18n';
 	import { photoUrl } from '$lib/photos';
+	import BasketControl from './BasketControl.svelte';
 	import Price from './Price.svelte';
 	import type { MenuItem } from './types';
 
@@ -9,6 +10,9 @@
 	const t = $derived(ui[lang]);
 	// A single price sits on the name row; several (sizes, choices) are listed under the name.
 	const single = $derived(item.variants.length === 1 ? item.variants[0] : null);
+	// Sold-out dishes get no basket buttons.
+	const orderable = $derived(item.available);
+	const fullName = (label: string | null) => (label ? `${item.name}, ${label}` : item.name);
 </script>
 
 <li
@@ -42,13 +46,24 @@
 				{/if}
 			</h3>
 			{#if single}
-				<p class="max-w-[50%] shrink-0 text-right">
-					{#if single.label}
-						<span class="whitespace-nowrap text-ink-muted">{single.label}</span>
-						<span aria-hidden="true" class="text-ink-muted">·</span>
+				<div class="flex max-w-[60%] shrink-0 items-baseline gap-2.5">
+					<p class="text-right">
+						{#if single.label}
+							<span class="whitespace-nowrap text-ink-muted">{single.label}</span>
+							<span aria-hidden="true" class="text-ink-muted">·</span>
+						{/if}
+						<Price price={single.price} {lang} />
+					</p>
+					{#if orderable}
+						<!-- The negative margin keeps the 40px button from making the card taller. -->
+						<BasketControl
+							variantId={single.id}
+							name={fullName(single.label)}
+							{lang}
+							class="-my-2 self-center"
+						/>
 					{/if}
-					<Price price={single.price} {lang} />
-				</p>
+				</div>
 			{/if}
 		</div>
 
@@ -63,13 +78,18 @@
 		{#if item.variants.length > 1}
 			<ul class="mt-2 space-y-1">
 				{#each item.variants as variant (variant.id)}
-					<li class="flex items-baseline gap-2">
-						<span class="text-ink-soft group-data-sold-out:text-ink-muted">{variant.label}</span>
-						<span
-							aria-hidden="true"
-							class="min-w-6 flex-1 -translate-y-[0.3em] border-b-2 border-dotted border-line"
-						></span>
-						<Price price={variant.price} {lang} />
+					<li class="flex items-center gap-2.5">
+						<div class="flex min-w-0 flex-1 items-baseline gap-2">
+							<span class="text-ink-soft group-data-sold-out:text-ink-muted">{variant.label}</span>
+							<span
+								aria-hidden="true"
+								class="min-w-6 flex-1 -translate-y-[0.3em] border-b-2 border-dotted border-line"
+							></span>
+							<Price price={variant.price} {lang} />
+						</div>
+						{#if orderable}
+							<BasketControl variantId={variant.id} name={fullName(variant.label)} {lang} />
+						{/if}
 					</li>
 				{/each}
 			</ul>

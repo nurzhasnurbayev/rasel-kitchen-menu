@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { cafe } from '$lib/config';
 	import { LANGS, ui } from '$lib/i18n';
+	import Basket from '$lib/menu/Basket.svelte';
 	import CafeInfo from '$lib/menu/CafeInfo.svelte';
 	import CategoryNav from '$lib/menu/CategoryNav.svelte';
 	import { enhanceScriptTag } from '$lib/menu/enhance-script';
@@ -65,6 +66,8 @@
 
 <SiteFooter lang={data.lang} />
 <div data-menu-end aria-hidden="true" class="h-px"></div>
+
+<Basket menu={data.menu} lang={data.lang} />
 
 <!-- Inline, so the enhancement costs no extra request. -->
 {@html enhanceScriptTag}

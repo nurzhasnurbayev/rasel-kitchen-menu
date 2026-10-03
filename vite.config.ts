@@ -1,6 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
-import { transform } from 'esbuild';
+import { build } from 'esbuild';
+import { resolve } from 'node:path';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 
@@ -12,19 +13,34 @@ export default defineConfig({
 });
 
 /**
- * `import code from './file.js?inline-script'` gives the file's source, minified, as a string.
- * Used for the menu's progressive-enhancement script, which is inlined into every menu page
- * (see src/lib/menu/enhance-script.ts), so comments and indentation are not sent to guests.
+ * `import code from './file.ts?inline-script'` gives the file, bundled with its (relative) imports
+ * and minified, as a string. Used for the menu's progressive-enhancement scripts, which are inlined
+ * into every menu page (see src/lib/menu/enhance-script.ts), so comments, indentation and module
+ * boilerplate are not sent to guests.
  */
 function inlineScript(): Plugin {
 	const query = '?inline-script';
 	return {
 		name: 'inline-script',
 		enforce: 'pre',
-		async transform(source, id) {
+		async load(id) {
 			if (!id.endsWith(query)) return;
-			const { code } = await transform(source, { loader: 'js', minify: true, target: 'es2020' });
-			return { code: `export default ${JSON.stringify(code.trim())};`, map: null };
+			const result = await build({
+				entryPoints: [id.slice(0, -query.length)],
+				bundle: true,
+				write: false,
+				minify: true,
+				format: 'iife',
+				target: 'es2020',
+				legalComments: 'none',
+				metafile: true
+			});
+			// Rebuild in `vite dev` when the script or anything it imports changes.
+			for (const input of Object.keys(result.metafile.inputs)) this.addWatchFile(resolve(input));
+			return {
+				code: `export default ${JSON.stringify(result.outputFiles[0].text.trim())};`,
+				map: null
+			};
 		}
 	};
 }
