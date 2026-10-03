@@ -42,7 +42,11 @@ npm run dev                # http://localhost:5173 → redirects to /kk or /ru
 
 ## Deploy to Cloudflare (one-time setup)
 
-Run these yourself; they act on your Cloudflare account.
+These steps act on the Cloudflare account.
+
+> **Status (2026-10-03):** steps 1–4 are done. The D1 database `rasel-kitchen-menu` (region
+> EEUR) is created, its ID is in `wrangler.jsonc`, and it is migrated and seeded. The R2 bucket
+> `rasel-kitchen-photos` exists. Still to do: deploy (step 5) and add a domain (step 6).
 
 1. **Log in**
 
@@ -66,8 +70,12 @@ Run these yourself; they act on your Cloudflare account.
    > The local database is keyed by `database_id`, so after pasting the real ID run
    > `npm run db:migrate:local` once more. The old local data stays in `.wrangler/`, unused.
 
-3. **Create the R2 bucket for photos.** There's no ID to paste: the bucket name is already in
-   `wrangler.jsonc`. Again, answer **no** if asked to update the config.
+3. **Create the R2 bucket for photos.** R2 must first be enabled once for the account: in the
+   Cloudflare dashboard open **R2 Object Storage** and follow the steps to enable it. This asks for
+   a payment method, but the free tier (10 GB) is far more than a menu's photos need. Otherwise
+   `wrangler` fails with error 10042, "Please enable R2". Then create the bucket. There's no ID to
+   paste: the bucket name is already in `wrangler.jsonc`. Again, answer **no** if asked to update
+   the config.
 
    ```bash
    npx wrangler r2 bucket create rasel-kitchen-photos

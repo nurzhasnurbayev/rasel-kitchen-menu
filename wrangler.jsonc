@@ -23,8 +23,8 @@
 		{
 			"binding": "DB",
 			"database_name": "rasel-kitchen-menu",
-			// Paste the `database_id` printed by `npx wrangler d1 create rasel-kitchen-menu`.
-			"database_id": "REPLACE_WITH_D1_DATABASE_ID",
+			// Created with `npx wrangler d1 create rasel-kitchen-menu` (region EEUR).
+			"database_id": "d2ce37dc-7d2d-4a44-9b31-b4880c3eef85",
 			"migrations_dir": "drizzle/migrations"
 		}
 	],
