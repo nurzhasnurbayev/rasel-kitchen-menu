@@ -1,7 +1,17 @@
 <script lang="ts">
 	import { LANGS, ui, type Lang } from '$lib/i18n';
 
-	let { lang }: { lang: Lang } = $props();
+	let {
+		lang,
+		href = (option: Lang) => `/${option}`,
+		remember = true
+	}: {
+		lang: Lang;
+		/** Link for each language; the menu's own pages by default. */
+		href?: (option: Lang) => string;
+		/** Let enhance.js save the choice and keep the reading position (menu pages only). */
+		remember?: boolean;
+	} = $props();
 </script>
 
 <!--
@@ -13,10 +23,10 @@
 		{#each LANGS as option (option)}
 			<li>
 				<a
-					href="/{option}"
+					href={href(option)}
 					hreflang={option}
 					lang={option}
-					data-lang-switch={option}
+					data-lang-switch={remember ? option : undefined}
 					aria-current={option === lang ? 'page' : undefined}
 					class="flex h-9 min-w-11 items-center justify-center rounded-full px-3 text-sm font-semibold tracking-wide text-ink-soft aria-[current=page]:bg-ink aria-[current=page]:text-paper motion-safe:transition-colors"
 				>

@@ -9,6 +9,8 @@
 	const t = $derived(ui[lang]);
 	// A single price sits on the name row; several (sizes, choices) are listed under the name.
 	const single = $derived(item.variants.length === 1 ? item.variants[0] : null);
+	// Sold-out dishes get no basket buttons.
+	const orderable = $derived(item.available);
 </script>
 
 <li
@@ -42,13 +44,20 @@
 				{/if}
 			</h3>
 			{#if single}
-				<p class="max-w-[50%] shrink-0 text-right">
-					{#if single.label}
-						<span class="whitespace-nowrap text-ink-muted">{single.label}</span>
-						<span aria-hidden="true" class="text-ink-muted">·</span>
+				<div class="flex max-w-[60%] shrink-0 items-baseline gap-2.5">
+					<p class="text-right">
+						{#if single.label}
+							<span class="whitespace-nowrap text-ink-muted">{single.label}</span>
+							<span aria-hidden="true" class="text-ink-muted">·</span>
+						{/if}
+						<Price price={single.price} {lang} />
+					</p>
+					{#if orderable}
+						<!-- basket-ui.ts puts the + button here. The negative margin keeps the 40px button
+						     from making the card taller. -->
+						<span data-basket-slot={single.id} class="-my-2 self-center empty:hidden"></span>
 					{/if}
-					<Price price={single.price} {lang} />
-				</p>
+				</div>
 			{/if}
 		</div>
 
@@ -63,13 +72,21 @@
 		{#if item.variants.length > 1}
 			<ul class="mt-2 space-y-1">
 				{#each item.variants as variant (variant.id)}
-					<li class="flex items-baseline gap-2">
-						<span class="text-ink-soft group-data-sold-out:text-ink-muted">{variant.label}</span>
-						<span
-							aria-hidden="true"
-							class="min-w-6 flex-1 -translate-y-[0.3em] border-b-2 border-dotted border-line"
-						></span>
-						<Price price={variant.price} {lang} />
+					<!-- Wraps on narrow screens, so an open − n + never covers the price. -->
+					<li class="flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1">
+						<div class="flex min-w-[min(100%,9.5rem)] flex-1 items-baseline gap-2">
+							<span class="whitespace-nowrap text-ink-soft group-data-sold-out:text-ink-muted"
+								>{variant.label}</span
+							>
+							<span
+								aria-hidden="true"
+								class="min-w-3 flex-1 -translate-y-[0.3em] border-b-2 border-dotted border-line"
+							></span>
+							<span class="shrink-0"><Price price={variant.price} {lang} /></span>
+						</div>
+						{#if orderable}
+							<span data-basket-slot={variant.id} class="empty:hidden"></span>
+						{/if}
 					</li>
 				{/each}
 			</ul>

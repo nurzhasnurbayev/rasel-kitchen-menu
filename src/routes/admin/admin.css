@@ -1,0 +1,10 @@
+/*
+ * Utilities used only by the admin panel. The admin pages also get app.css (from the root
+ * layout) for the fonts, base styles and the classes shared with the menu.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+@import '../../theme.css';
+
+@source '../../lib/admin';
+@source '.';

@@ -37,10 +37,29 @@ const kk = {
 	soldOut: 'Таусылды',
 	notFound: 'Бет табылмады',
 	somethingWentWrong: 'Қате орын алды',
-	backToMenu: 'Мәзірге оралу'
+	backToMenu: 'Мәзірге оралу',
+
+	// Guest basket (enhancement; only shown with JavaScript)
+	basket: 'Себет',
+	openBasket: 'Себетті ашу',
+	addToBasket: 'Себетке қосу',
+	removeOne: 'Біреуін алып тастау',
+	inBasket: 'Себетте',
+	basketEmpty: 'Себет бос',
+	total: 'Барлығы',
+	priceOnRequestNote: 'Бағасы сұралатын тағамдар жалпы сомаға кірмеген',
+	soldOutNote: 'Таусылған тағамдар тапсырысқа кірмейді',
+	/** Wording to be checked by a native speaker. */
+	showToWaiter: 'Даяшыға көрсету',
+	clearBasket: 'Себетті тазалау',
+	confirmClear: 'Себеттегінің бәрін өшіру керек пе?',
+	close: 'Жабу',
+	order: 'Тапсырыс',
+	showThisScreen: 'Осы экранды даяшыға көрсетіңіз',
+	editOrder: 'Өзгерту'
 };
 
-type Dictionary = {
+export type Dictionary = {
 	[K in keyof typeof kk]: (typeof kk)[K] extends string ? string : (typeof kk)[K];
 };
 
@@ -62,7 +81,24 @@ const ru: Dictionary = {
 	soldOut: 'Нет в наличии',
 	notFound: 'Страница не найдена',
 	somethingWentWrong: 'Что-то пошло не так',
-	backToMenu: 'Вернуться к меню'
+	backToMenu: 'Вернуться к меню',
+
+	basket: 'Корзина',
+	openBasket: 'Открыть корзину',
+	addToBasket: 'Добавить в корзину',
+	removeOne: 'Убрать одну порцию',
+	inBasket: 'В корзине',
+	basketEmpty: 'Корзина пуста',
+	total: 'Итого',
+	priceOnRequestNote: 'Блюда с ценой по запросу не вошли в сумму',
+	soldOutNote: 'Блюда, которых нет в наличии, не войдут в заказ',
+	showToWaiter: 'Показать официанту',
+	clearBasket: 'Очистить корзину',
+	confirmClear: 'Убрать всё из корзины?',
+	close: 'Закрыть',
+	order: 'Заказ',
+	showThisScreen: 'Покажите этот экран официанту',
+	editOrder: 'Изменить'
 };
 
 export const ui: Record<Lang, Dictionary> = { kk, ru };
