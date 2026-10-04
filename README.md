@@ -53,13 +53,11 @@ locally go to a local R2 emulation in `.wrangler/`.
 
 These steps act on the Cloudflare account.
 
-> **Status (2026-10-04):** steps 1–4 are done. The D1 database `rasel-kitchen-menu` (region
-> EEUR) is created, its ID is in `wrangler.jsonc`, and it is migrated and seeded. The R2 bucket
-> `rasel-kitchen-photos` exists. Still to do: deploy (step 5), add a domain (step 6), and set up
-> the admin panel (steps 7–8). Until step 7 is done, `/admin` answers 503 in production.
->
-> One migration was added after step 4 (`0002_cafe_info`, the cafe details table), so run
-> `npm run db:migrate:remote` once more before the first deploy.
+> **Status (2026-10-04):** steps 1–5 are done. The menu is live at
+> https://rasel-kitchen-menu.rasel-kitchen-menu.workers.dev. All migrations (up to
+> `0002_cafe_info`) are applied to the D1 database `rasel-kitchen-menu` (region EEUR), and the
+> dish photos are in the R2 bucket `rasel-kitchen-photos`. Still to do: add a domain (step 6) and
+> set up the admin panel (steps 7–8). Until step 7 is done, `/admin` answers 503 in production.
 
 1. **Log in**
 
