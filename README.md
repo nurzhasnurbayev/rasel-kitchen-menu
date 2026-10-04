@@ -53,11 +53,13 @@ locally go to a local R2 emulation in `.wrangler/`.
 
 These steps act on the Cloudflare account.
 
-> **Status (2026-10-04):** steps 1–5 are done. The menu is live at
-> https://rasel-kitchen-menu.rasel-kitchen-menu.workers.dev. All migrations (up to
-> `0002_cafe_info`) are applied to the D1 database `rasel-kitchen-menu` (region EEUR), and the
-> dish photos are in the R2 bucket `rasel-kitchen-photos`. Still to do: add a domain (step 6) and
-> set up the admin panel (steps 7–8). Until step 7 is done, `/admin` answers 503 in production.
+> **Status (2026-10-04):** steps 1–5 and 7 are done. The menu is live at
+> https://rasel-kitchen-menu.rasel-kitchen-menu.workers.dev and the admin panel at
+> https://rasel-kitchen-menu.rasel-kitchen-menu.workers.dev/admin, behind a Cloudflare Access
+> login. All migrations (up to `0002_cafe_info`) are applied to the D1 database
+> `rasel-kitchen-menu` (region EEUR), and the dish photos are in the R2 bucket
+> `rasel-kitchen-photos`. Still to do: add a domain (step 6, then add it to the Access application)
+> and the cache purge (step 8).
 
 1. **Log in**
 
@@ -110,7 +112,9 @@ These steps act on the Cloudflare account.
    Workers & Pages → `rasel-kitchen-menu` → Settings → Domains & Routes → Add → Custom domain,
    for example `menu.example.kz`. The domain's DNS must be on Cloudflare. Edge caching only works
    on a custom domain; on `workers.dev` every request is rendered. Point the table QR codes at the
-   root URL, e.g. `https://menu.example.kz/`.
+   root URL, e.g. `https://menu.example.kz/`. Then add the domain to the Access application (see
+   [When you add a custom domain](#when-you-add-a-custom-domain)); until you do, `/admin` on the
+   new domain answers 403.
 
 7. **Protect the admin panel with Cloudflare Access.** See
    [Setting up Cloudflare Access](#setting-up-cloudflare-access) below. You'll end up with two
@@ -419,54 +423,71 @@ Every request under `/admin` (pages, form submissions, data requests) is checked
 `src/hooks.server.ts` before anything else runs. In production it needs a valid Cloudflare Access
 token: the `Cf-Access-Jwt-Assertion` header, signed (RS256) by your team's keys, for this
 application's AUD, not expired. The check is in the Worker as well as in Access because the Worker
-can also be reached where Access does not apply (the `workers.dev` address, or `/%61dmin`-style
-spellings of the path). If `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` is empty, `/admin` answers 503
-rather than opening up. In `npm run dev` the check is skipped.
+can also be reached where Access does not apply: on a hostname that is not in the Access
+application (such as a custom domain added later), or through a spelling of the path that Access
+might not match. If `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` is empty, `/admin` answers 503 rather
+than opening up. In `npm run dev` the check is skipped.
 
 ### Setting up Cloudflare Access
 
-Access protects a path on a domain that is on Cloudflare, so do step 6 (custom domain) first. The
-examples use `menu.example.kz`; use yours.
+This is already done for the live site: team domain `quiet-thunder-8c55.cloudflareaccess.com`,
+application **Rasel menu admin**, covering `/admin` on
+`rasel-kitchen-menu.rasel-kitchen-menu.workers.dev`. The steps below are how it was set up, for
+reference or a fresh account.
 
-1. Open the **Cloudflare Zero Trust** dashboard (Cloudflare dashboard → **Zero Trust**). The first
-   time, it asks you to pick a **team name** (e.g. `rasel`, giving the team domain
-   `rasel.cloudflareaccess.com`) and a plan. The **Free** plan (up to 50 users) is enough. It may
-   ask for a payment method even for the free plan.
-2. **Login method.** "One-time PIN" (a code sent by email) is available by default and is all you
-   need. It is under **Settings → Authentication → Login methods**. You can add Google there later.
-3. **Create the application.** Go to **Access → Applications → Add an application →
+Don't use the **Enable Cloudflare Access** switch on the Worker's own settings page: it puts the
+whole site behind the login, the menu included.
+
+1. Open **Cloudflare One** (Cloudflare dashboard → **Zero Trust**). The first time, it asks you to
+   pick a **team name**, which gives the team domain `<team>.cloudflareaccess.com`, and a plan.
+   The **Free** plan (up to 50 users) is enough. It may ask for a payment method even for the free
+   plan.
+2. **Login method.** Go to **Integrations → Identity providers**. If **One-time PIN** (a code sent
+   by email) is not in the list, click **Add an identity provider → One-time PIN**. One-time PIN is
+   only automatic while no other login method exists, and a new account may already have the
+   **Cloudflare** one (sign in with a Cloudflare account).
+3. **Create the application.** Go to **Access controls → Applications → Create new application →
    Self-hosted**.
-   - Name: `Rasel menu admin`
-   - Session duration: e.g. 24 hours
-   - Public hostname: domain `menu.example.kz`, path `admin`. Access applies it to everything
-     under `/admin`.
-4. **Add a policy** to the application: action **Allow**, a rule **Include → Emails** with the
-   email addresses that may edit the menu. Save the application.
-5. **Copy two values:**
-   - the **Application Audience (AUD) Tag**, shown in the application's settings (Overview / Basic
-     information);
-   - the **team domain**, e.g. `rasel.cloudflareaccess.com` (Zero Trust → Settings, or the
-     team name from step 1 + `.cloudflareaccess.com`).
-6. Put them into `wrangler.jsonc`:
+   - Name: `Rasel menu admin`. Session duration: 1 week.
+   - Public hostnames, two of them, both with subdomain `rasel-kitchen-menu` and domain
+     `rasel-kitchen-menu.workers.dev`: one with path `admin`, one with path `admin/*`.
+   - Policy: **Create new policy**, named e.g. `Menu editors`, action **Allow**, a rule **Include →
+     Emails** with the addresses that may edit the menu.
+   - Login methods: accept all available identity providers.
+4. **Copy two values:**
+   - the **Application Audience (AUD) Tag**: open the application → **Additional settings → AUD
+     tag**;
+   - the **team domain**: Cloudflare One → **Overview → Account details**.
+5. Put them into `wrangler.jsonc` (neither is a secret):
 
    ```jsonc
    "vars": {
-   	"ACCESS_TEAM_DOMAIN": "rasel.cloudflareaccess.com",
+   	"ACCESS_TEAM_DOMAIN": "<team>.cloudflareaccess.com",
    	"ACCESS_AUD": "the-long-aud-tag"
    },
    ```
 
    then `npm run deploy`.
 
-7. **Test:** open `https://menu.example.kz/admin` in a private window. Access asks for your email
-   and sends a code; after that the admin panel opens, with your email at the bottom. An email that
-   is not in the policy is refused by Access.
-
-Optional: once the custom domain works, set `"workers_dev": false` in `wrangler.jsonc` so the menu
-is only served on your domain. (`/admin` is refused on `workers.dev` anyway, since no Access token
-arrives there.)
+6. **Test:** open `/admin` in a private window. Access asks for an email and sends a code to it;
+   after that the admin panel opens, with your email at the bottom. An email that is not in the
+   policy is refused by Access.
 
 To sign out, use **Шығу / Выйти** at the bottom of the admin pages.
+
+#### Adding or removing an editor
+
+**Access controls → Applications → Rasel menu admin →** the **Menu editors** policy → edit the
+**Emails** list → Save. It applies at the next login; no deploy needed.
+
+#### When you add a custom domain
+
+Add the domain to the same application: **Access controls → Applications → Rasel menu admin → Add
+public hostname** with your domain and path `admin`, then once more with path `admin/*`. The AUD
+tag stays the same, so there is nothing to deploy. Until then, `/admin` on the new domain answers 403.
+
+Optional: once the custom domain works, set `"workers_dev": false` in `wrangler.jsonc` so the menu
+is only served on your domain.
 
 ### Cache purge after saves
 
