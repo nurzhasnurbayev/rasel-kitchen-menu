@@ -53,13 +53,13 @@ locally go to a local R2 emulation in `.wrangler/`.
 
 These steps act on the Cloudflare account.
 
-> **Status (2026-10-04):** steps 1–5 and 7 are done. The menu is live at
-> https://rasel-kitchen-menu.rasel-kitchen-menu.workers.dev and the admin panel at
-> https://rasel-kitchen-menu.rasel-kitchen-menu.workers.dev/admin, behind a Cloudflare Access
-> login. All migrations (up to `0002_cafe_info`) are applied to the D1 database
-> `rasel-kitchen-menu` (region EEUR), and the dish photos are in the R2 bucket
-> `rasel-kitchen-photos`. Still to do: add a domain (step 6, then add it to the Access application)
-> and the cache purge (step 8).
+> **Status (2026-10-04):** steps 1–7 are done. The menu is live at https://rasel-kitchen.app and
+> the admin panel at https://rasel-kitchen.app/admin, behind a Cloudflare Access login.
+> `www.rasel-kitchen.app` and the first address,
+> https://rasel-kitchen-menu.rasel-kitchen-menu.workers.dev, redirect there. All migrations (up
+> to `0002_cafe_info`) are applied to the D1 database `rasel-kitchen-menu` (region EEUR), and the
+> dish photos are in the R2 bucket `rasel-kitchen-photos`. Still to do: the API token for the
+> cache purge (step 8; the zone ID is already set).
 
 1. **Log in**
 
@@ -108,13 +108,15 @@ These steps act on the Cloudflare account.
 
    This prints the `*.workers.dev` URL of the menu.
 
-6. **Add a custom domain** (recommended). In the Cloudflare dashboard go to
-   Workers & Pages → `rasel-kitchen-menu` → Settings → Domains & Routes → Add → Custom domain,
-   for example `menu.example.kz`. The domain's DNS must be on Cloudflare. Edge caching only works
-   on a custom domain; on `workers.dev` every request is rendered. Point the table QR codes at the
-   root URL, e.g. `https://menu.example.kz/`. Then add the domain to the Access application (see
-   [When you add a custom domain](#when-you-add-a-custom-domain)); until you do, `/admin` on the
-   new domain answers 403.
+6. **Add a custom domain** (recommended). The domain's DNS must be on Cloudflare, which it is
+   from the start when you buy the domain from Cloudflare. In `wrangler.jsonc`, list the domain
+   and its `www.` form under `routes` (with `"custom_domain": true`) and set `CANONICAL_HOST`
+   under `vars`, then `npm run deploy`. Wrangler creates the DNS records and the certificates;
+   HTTPS works a few minutes later. `www.` and the `workers.dev` address then redirect to the
+   domain. Edge caching only works on a custom domain; on `workers.dev` every request is rendered.
+   Point the table QR codes at the root URL, `https://rasel-kitchen.app/`. Also put the domain in
+   the Access application (see [Changing the domain](#changing-the-domain)); until then, `/admin`
+   on it answers 403.
 
 7. **Protect the admin panel with Cloudflare Access.** See
    [Setting up Cloudflare Access](#setting-up-cloudflare-access) below. You'll end up with two
@@ -255,6 +257,11 @@ D1. Edge caching has three limits:
   cache.
 
 The language redirect at `/` is never cached.
+
+**One address.** The menu's address is `https://rasel-kitchen.app` (`CANONICAL_HOST` in
+`wrangler.jsonc`). Requests to `www.rasel-kitchen.app` or to the `workers.dev` address get a 301
+to the same path there (308 for form submissions), so shared links, search results and admin
+logins all use one hostname (`src/lib/server/canonical.ts`, called first in `hooks.server.ts`).
 
 **Very little JavaScript.** The menu page sets `csr = false`, so it ships none of SvelteKit's
 client runtime. Instead, two small scripts are bundled and minified at build time (the
@@ -424,16 +431,14 @@ Every request under `/admin` (pages, form submissions, data requests) is checked
 token: the `Cf-Access-Jwt-Assertion` header, signed (RS256) by your team's keys, for this
 application's AUD, not expired. The check is in the Worker as well as in Access because the Worker
 can also be reached where Access does not apply: on a hostname that is not in the Access
-application (such as a custom domain added later), or through a spelling of the path that Access
-might not match. If `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` is empty, `/admin` answers 503 rather
+application, or through a spelling of the path that Access might not match. If `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` is empty, `/admin` answers 503 rather
 than opening up. In `npm run dev` the check is skipped.
 
 ### Setting up Cloudflare Access
 
 This is already done for the live site: team domain `quiet-thunder-8c55.cloudflareaccess.com`,
-application **Rasel menu admin**, covering `/admin` on
-`rasel-kitchen-menu.rasel-kitchen-menu.workers.dev`. The steps below are how it was set up, for
-reference or a fresh account.
+application **Rasel menu admin**, covering `/admin` on `rasel-kitchen.app`. The steps below are
+how it was set up, for reference or a fresh account.
 
 Don't use the **Enable Cloudflare Access** switch on the Worker's own settings page: it puts the
 whole site behind the login, the menu included.
@@ -449,8 +454,10 @@ whole site behind the login, the menu included.
 3. **Create the application.** Go to **Access controls → Applications → Create new application →
    Self-hosted**.
    - Name: `Rasel menu admin`. Session duration: 1 week.
-   - Public hostnames, two of them, both with subdomain `rasel-kitchen-menu` and domain
-     `rasel-kitchen-menu.workers.dev`: one with path `admin`, one with path `admin/*`.
+   - Public hostnames, two of them, both with an empty subdomain and domain `rasel-kitchen.app`:
+     one with path `admin`, one with path `admin/*`. (Without a domain of your own, use subdomain
+     `rasel-kitchen-menu` and domain `rasel-kitchen-menu.workers.dev`; then leave
+     `CANONICAL_HOST` empty, since it would redirect workers.dev away.)
    - Policy: **Create new policy**, named e.g. `Menu editors`, action **Allow**, a rule **Include →
      Emails** with the addresses that may edit the menu.
    - Login methods: accept all available identity providers.
@@ -480,30 +487,33 @@ To sign out, use **Шығу / Выйти** at the bottom of the admin pages.
 **Access controls → Applications → Rasel menu admin →** the **Menu editors** policy → edit the
 **Emails** list → Save. It applies at the next login; no deploy needed.
 
-#### When you add a custom domain
+#### Changing the domain
 
-Add the domain to the same application: **Access controls → Applications → Rasel menu admin → Add
-public hostname** with your domain and path `admin`, then once more with path `admin/*`. The AUD
-tag stays the same, so there is nothing to deploy. Until then, `/admin` on the new domain answers 403.
+The application lists the domain in its two public hostnames (paths `admin` and `admin/*`). For a
+new domain, change both in **Access controls → Applications → Rasel menu admin**. The AUD tag
+stays the same, so only the `wrangler.jsonc` changes from step 6 need a deploy. Until the
+application has the new domain, `/admin` on it answers 403.
 
-Optional: once the custom domain works, set `"workers_dev": false` in `wrangler.jsonc` so the menu
-is only served on your domain.
+The `workers.dev` address only redirects to the domain. `"workers_dev": false` in
+`wrangler.jsonc` would turn it off completely.
 
 ### Cache purge after saves
 
 The menu pages are cached at the edge for 60 seconds. Clearing the cache with
 `caches.default.delete` would only clear one Cloudflare data center, so the admin uses Cloudflare's
-**purge-by-URL API** for `https://<your domain>/kk` and `/ru`. This needs two Worker secrets:
+**purge-by-URL API** for `https://rasel-kitchen.app/kk` and `/ru`. It needs the domain's zone ID,
+which is already in `wrangler.jsonc` (`CLOUDFLARE_ZONE_ID` under `vars`; dashboard → the domain →
+Overview → API → Zone ID), and an API token, which is a secret:
 
-1. **Zone ID**: Cloudflare dashboard → your domain → Overview, in the right column ("API → Zone
-   ID").
-2. **API token**: My Profile → API Tokens → **Create Token** → **Create Custom Token**.
-   Permissions: **Zone · Cache Purge · Purge**. Zone resources: **Include → Specific zone → your
-   domain**. Create it and copy the token (it is shown once).
-3. Store both as secrets (they never go in `wrangler.jsonc` or git):
+1. **Create the token**: Cloudflare dashboard → your profile (top right) → **API Tokens** →
+   **Create Token** → **Create Custom Token**. Permissions: **Zone · Cache Purge · Purge**. Zone
+   resources: **Include → Specific zone → rasel-kitchen.app**. Create it and copy the token (it
+   is shown once).
+2. **Store it as a Worker secret** (never in `wrangler.jsonc` or git), either in the dashboard
+   (**Workers & Pages → rasel-kitchen-menu → Settings → Variables and Secrets → Add**, type
+   **Secret**, name `CLOUDFLARE_API_TOKEN`) or with:
 
    ```bash
-   npx wrangler secret put CLOUDFLARE_ZONE_ID
    npx wrangler secret put CLOUDFLARE_API_TOKEN
    ```
 

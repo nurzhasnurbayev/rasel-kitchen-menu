@@ -2,8 +2,22 @@ import { dev } from '$app/environment';
 import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { DEFAULT_LANG, isLang, LANG_COOKIE } from '$lib/i18n';
 import { ACCESS_JWT_HEADER, verifyAccessJwt } from '$lib/server/access';
+import { canonicalUrl } from '$lib/server/canonical';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// www. and workers.dev visits go to https://<the cafe's domain> first, admin included: the
+	// Access login only covers the domain.
+	const canonical = canonicalUrl(event.url, event.platform?.env?.CANONICAL_HOST);
+	if (canonical) {
+		const keepsMethod = event.request.method !== 'GET' && event.request.method !== 'HEAD';
+		return new Response(null, {
+			status: keepsMethod ? 308 : 301,
+			// Browsers keep it an hour, not forever, so they would follow a later change of domain.
+			// Private: the edge cache does not store it.
+			headers: { location: canonical.href, 'cache-control': 'private, max-age=3600' }
+		});
+	}
+
 	const admin = isAdminRequest(event);
 	if (admin) {
 		const denied = await authorizeAdmin(event);

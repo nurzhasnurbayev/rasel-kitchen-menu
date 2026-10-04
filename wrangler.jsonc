@@ -19,17 +19,31 @@
 	},
 	"upload_source_maps": true,
 
-	// Cloudflare Access for /admin (see "Admin panel" in the README). Until both are filled in,
-	// /admin answers 503 in production. Not secret: they only identify the Access application.
+	// The menu's domain. `wrangler deploy` attaches both names to this Worker, creating their DNS
+	// records and certificates. The Worker redirects www. (and workers.dev) to CANONICAL_HOST.
+	"routes": [
+		{ "pattern": "rasel-kitchen.app", "custom_domain": true },
+		{ "pattern": "www.rasel-kitchen.app", "custom_domain": true }
+	],
+	// Kept on so older links to the workers.dev address still work: they redirect to the domain.
+	"workers_dev": true,
+
+	// None of these is secret.
 	"vars": {
+		// The menu's public address (no https://). See src/lib/server/canonical.ts.
+		"CANONICAL_HOST": "rasel-kitchen.app",
+		// Cloudflare Access for /admin (see "Admin panel" in the README). Until both are filled in,
+		// /admin answers 503 in production.
 		// The Cloudflare One (Zero Trust) team domain.
 		"ACCESS_TEAM_DOMAIN": "quiet-thunder-8c55.cloudflareaccess.com",
 		// Cloudflare One → Access controls → Applications → Rasel menu admin → Additional settings →
-		// Application Audience (AUD) Tag. It is not a secret: it only says which app a login is for.
-		"ACCESS_AUD": "2821132641ca740c0e5cd62f4ed713425775cb29657bf8f786380c66f88c8a38"
+		// Application Audience (AUD) Tag. It only says which app a login is for.
+		"ACCESS_AUD": "2821132641ca740c0e5cd62f4ed713425775cb29657bf8f786380c66f88c8a38",
+		// The domain's zone (dashboard → rasel-kitchen.app → Overview → API), for the cache purge.
+		"CLOUDFLARE_ZONE_ID": "7be470d63c5d913704e628195cfe6ba5"
 	},
-	// Secrets (set with `npx wrangler secret put <NAME>`, never in this file):
-	// CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID, used to purge the menu cache after admin saves.
+	// Secret (set with `npx wrangler secret put CLOUDFLARE_API_TOKEN`, never in this file): an API
+	// token allowed to purge this zone's cache, so admin saves show on the menu right away.
 
 	"d1_databases": [
 		{

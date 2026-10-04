@@ -15,9 +15,11 @@ declare global {
 		ACCESS_TEAM_DOMAIN?: string;
 		/** Application Audience (AUD) tag of the Access application for /admin (vars). */
 		ACCESS_AUD?: string;
+		/** The menu's domain, e.g. "rasel-kitchen.app" (vars). www. and workers.dev redirect to it. */
+		CANONICAL_HOST?: string;
 		/** Secret: API token with Zone → Cache Purge permission, to purge /kk and /ru after saves. */
 		CLOUDFLARE_API_TOKEN?: string;
-		/** Secret: ID of the zone (domain) the menu is served on. */
+		/** ID of the zone (domain) the menu is served on (vars; not a secret). */
 		CLOUDFLARE_ZONE_ID?: string;
 	}
 
