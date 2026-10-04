@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { groupMenu, type MenuRow } from './menu';
+import { saveCafe } from './admin/repo';
+import type { Database } from './db';
+import { migratedDrizzle } from './db/test-db';
+import { getMenuPage, groupMenu, type MenuRow } from './menu';
 
 const row = (overrides: Partial<MenuRow>): MenuRow => ({
 	categoryId: 1,
@@ -56,5 +59,65 @@ describe('groupMenu', () => {
 
 	it('returns an empty menu for no rows', () => {
 		expect(groupMenu([])).toEqual([]);
+	});
+});
+
+describe('getMenuPage', () => {
+	const setup = () => migratedDrizzle().db as unknown as Database;
+
+	it('loads the seeded menu in the requested language', async () => {
+		const db = setup();
+		const kk = await getMenuPage(db, 'kk');
+		const ru = await getMenuPage(db, 'ru');
+
+		expect(kk.menu.map((c) => c.name)).toEqual([
+			'Бірінші тағамдар',
+			'Екінші тағамдар',
+			'Гарнирлер',
+			'Сусындар',
+			'Соустар',
+			'Салаттар'
+		]);
+		expect(ru.menu[3].name).toBe('Напитки');
+		expect(ru.menu[3].items[0]).toEqual({
+			id: 23,
+			name: 'Компот',
+			description: null,
+			photoKey: null,
+			available: true,
+			variants: [
+				{ id: 31, label: '1 л', price: 900 },
+				{ id: 32, label: '0,5 л', price: 450 }
+			]
+		});
+		expect(kk.menu.flatMap((c) => c.items)).toHaveLength(37);
+	});
+
+	it('has no cafe details until the admin saves them', async () => {
+		const { cafe } = await getMenuPage(setup(), 'kk');
+		expect(cafe).toEqual({ address: null, hours: null, phone: null, twoGisUrl: null });
+	});
+
+	it('returns the cafe details in the requested language', async () => {
+		const db = setup();
+		await saveCafe(db, {
+			addressKk: 'Алматы қ., Абай даңғылы, 1',
+			addressRu: 'г. Алматы, пр. Абая, 1',
+			hoursKk: 'Күн сайын 10:00–22:00',
+			hoursRu: 'Ежедневно 10:00–22:00',
+			phone: '+7 700 000 00 00',
+			twoGisUrl: null
+		});
+
+		expect((await getMenuPage(db, 'kk')).cafe).toEqual({
+			address: 'Алматы қ., Абай даңғылы, 1',
+			hours: 'Күн сайын 10:00–22:00',
+			phone: '+7 700 000 00 00',
+			twoGisUrl: null
+		});
+		expect((await getMenuPage(db, 'ru')).cafe).toMatchObject({
+			address: 'г. Алматы, пр. Абая, 1',
+			hours: 'Ежедневно 10:00–22:00'
+		});
 	});
 });

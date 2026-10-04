@@ -59,12 +59,12 @@
 		type="button"
 		data-basket-open
 		aria-haspopup="dialog"
-		class="mx-auto flex min-h-14 w-full max-w-2xl items-center gap-3 rounded-full bg-accent px-5 text-left text-on-accent shadow-[0_6px_24px_rgb(42_28_19/0.25)]"
+		class="mx-auto flex min-h-14 w-full max-w-2xl items-center gap-3 rounded-full bg-accent px-5 text-left text-on-accent shadow-float"
 	>
 		<span class="font-semibold">{t.basket}</span>
 		<span
 			data-basket-count
-			class="grid h-7 min-w-7 place-items-center rounded-full bg-on-accent px-2 text-sm font-bold text-accent-ink tabular-nums"
+			class="grid h-7 min-w-7 place-items-center rounded-full bg-orange px-2 text-sm font-bold text-on-orange tabular-nums"
 		></span>
 		<span data-basket-total class="ml-auto font-semibold whitespace-nowrap tabular-nums"></span>
 	</button>

@@ -104,6 +104,16 @@ describe('schema constraints', () => {
 		expect(db.prepare('SELECT count(*) AS n FROM variants WHERE item_id = 23').get()?.n).toBe(0);
 	});
 
+	it('keeps the cafe details in a single row, bilingual or empty', () => {
+		const db = migratedDb();
+		expect(db.prepare('SELECT count(*) AS n FROM cafe_info').get()?.n).toBe(0);
+		db.prepare("INSERT INTO cafe_info (id, phone) VALUES (1, '+7 700 000 00 00')").run();
+		expect(() => db.prepare('INSERT INTO cafe_info (id) VALUES (2)').run()).toThrow(/CHECK/);
+		expect(() =>
+			db.prepare("UPDATE cafe_info SET address_kk = 'Абай даңғылы, 1' WHERE id = 1").run()
+		).toThrow(/CHECK/);
+	});
+
 	it('refuses to delete a category that still has items', () => {
 		const db = migratedDb();
 		expect(() => db.prepare('DELETE FROM categories WHERE id = 1').run()).toThrow(/FOREIGN KEY/);

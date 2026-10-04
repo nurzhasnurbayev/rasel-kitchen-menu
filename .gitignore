@@ -25,3 +25,9 @@ vite.config.ts.timestamp-*
 
 # Local Claude Code preview config (machine-specific)
 /.claude/launch.json
+
+# Dish photos waiting to be uploaded with scripts/upload-photos.py
+/photos/
+
+# Python bytecode
+__pycache__/

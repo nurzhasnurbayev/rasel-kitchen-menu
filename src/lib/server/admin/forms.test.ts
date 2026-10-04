@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { parseCategoryForm, parseItemForm, parsePrice } from './forms';
+import {
+	isPhone,
+	parse2gisUrl,
+	parseCafeForm,
+	parseCategoryForm,
+	parseItemForm,
+	parsePrice
+} from './forms';
 
 const form = (fields: Record<string, string>) => {
 	const data = new FormData();
@@ -131,7 +138,7 @@ describe('parseItemForm', () => {
 				categoryId: 'unknownCategory',
 				nameRu: 'required',
 				'variant.0.price': 'required',
-				'variant.1.labelRu': 'labelBothLanguages',
+				'variant.1.labelRu': 'bothLanguages',
 				'variant.1.price': 'invalidPrice'
 			}
 		});
@@ -167,6 +174,109 @@ describe('parseItemForm', () => {
 		expect(parseItemForm(data, [1])).toEqual({
 			ok: false,
 			errors: { variants: 'tooManyVariants' }
+		});
+	});
+});
+
+describe('isPhone', () => {
+	it('accepts numbers as people write them', () => {
+		for (const phone of ['+7 700 000 00 00', '8 (727) 123-45-67', '+77000000000', '25 00 00']) {
+			expect(isPhone(phone), phone).toBe(true);
+		}
+	});
+
+	it('rejects text, too few or too many digits', () => {
+		for (const phone of ['abc', '+7 700 CALL', '1234', '+7 700 000 00 00 00 00 00', '+', '7+700']) {
+			expect(isPhone(phone), phone).toBe(false);
+		}
+	});
+});
+
+describe('parse2gisUrl', () => {
+	it('accepts 2GIS links and makes them https', () => {
+		expect(parse2gisUrl('https://2gis.kz/almaty/firm/70000001')).toBe(
+			'https://2gis.kz/almaty/firm/70000001'
+		);
+		expect(parse2gisUrl('2gis.kz/almaty/firm/70000001')).toBe(
+			'https://2gis.kz/almaty/firm/70000001'
+		);
+		expect(parse2gisUrl('http://go.2gis.com/abcde')).toBe('https://go.2gis.com/abcde');
+		expect(parse2gisUrl('https://2GIS.ru/moscow')).toBe('https://2gis.ru/moscow');
+	});
+
+	it('rejects every other address', () => {
+		for (const link of [
+			'https://evil.example/2gis.kz',
+			'https://2gis.kz.evil.example/',
+			'https://not2gis.kz/',
+			'https://2gis.kz@evil.example/',
+			'javascript:alert(1)',
+			'ftp://2gis.kz/',
+			'just some words'
+		]) {
+			expect(parse2gisUrl(link), link).toBeNull();
+		}
+	});
+});
+
+describe('parseCafeForm', () => {
+	const filled = {
+		addressKk: ' Алматы қ.,  Абай даңғылы, 1 ',
+		addressRu: 'г. Алматы, пр. Абая, 1',
+		hoursKk: 'Күн сайын 10:00–22:00',
+		hoursRu: 'Ежедневно 10:00–22:00',
+		phone: '+7 700 000 00 00',
+		twoGisUrl: 'go.2gis.com/abcde'
+	};
+
+	it('parses and tidies the details', () => {
+		expect(parseCafeForm(form(filled))).toEqual({
+			ok: true,
+			value: {
+				addressKk: 'Алматы қ., Абай даңғылы, 1',
+				addressRu: 'г. Алматы, пр. Абая, 1',
+				hoursKk: 'Күн сайын 10:00–22:00',
+				hoursRu: 'Ежедневно 10:00–22:00',
+				phone: '+7 700 000 00 00',
+				twoGisUrl: 'https://go.2gis.com/abcde'
+			}
+		});
+	});
+
+	it('stores empty fields as null', () => {
+		expect(parseCafeForm(form({ addressKk: '', phone: '  ' }))).toEqual({
+			ok: true,
+			value: {
+				addressKk: null,
+				addressRu: null,
+				hoursKk: null,
+				hoursRu: null,
+				phone: null,
+				twoGisUrl: null
+			}
+		});
+	});
+
+	it('wants the address and the hours in both languages', () => {
+		expect(parseCafeForm(form({ ...filled, addressRu: '', hoursKk: '' }))).toEqual({
+			ok: false,
+			errors: { addressRu: 'bothLanguages', hoursKk: 'bothLanguages' }
+		});
+	});
+
+	it('reports a bad phone, a bad link and overlong text together', () => {
+		expect(
+			parseCafeForm(
+				form({
+					...filled,
+					addressKk: 'а'.repeat(201),
+					phone: 'call me',
+					twoGisUrl: 'https://maps.example/cafe'
+				})
+			)
+		).toEqual({
+			ok: false,
+			errors: { addressKk: 'tooLong', phone: 'invalidPhone', twoGisUrl: 'invalid2gisUrl' }
 		});
 	});
 });

@@ -22,3 +22,12 @@ export interface MenuCategory {
 	name: string;
 	items: MenuItem[];
 }
+
+/** The cafe's contact details in one language; null where the admin has not filled one in. */
+export interface CafeInfo {
+	address: string | null;
+	hours: string | null;
+	/** As it should be shown, e.g. "+7 700 000 00 00". */
+	phone: string | null;
+	twoGisUrl: string | null;
+}

@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { migratedDrizzle } from '../db/test-db';
-import type { ItemInput } from './forms';
+import type { CafeInput, ItemInput } from './forms';
 import {
 	createCategory,
 	createItem,
 	deleteCategory,
 	deleteItem,
 	getAdminMenu,
+	getCafe,
 	getItem,
 	moveCategory,
 	moveInList,
 	moveItem,
+	saveCafe,
 	setItemAvailable,
 	setItemPhoto,
 	updateCategory,
@@ -244,5 +246,48 @@ describe('items', () => {
 		expect(sqlite.prepare('SELECT count(*) AS n FROM variants WHERE item_id = 23').get()?.n).toBe(
 			0
 		);
+	});
+});
+
+describe('cafe details', () => {
+	const details: CafeInput = {
+		addressKk: 'Алматы қ., Абай даңғылы, 1',
+		addressRu: 'г. Алматы, пр. Абая, 1',
+		hoursKk: 'Күн сайын 10:00–22:00',
+		hoursRu: 'Ежедневно 10:00–22:00',
+		phone: '+7 700 000 00 00',
+		twoGisUrl: 'https://go.2gis.com/abcde'
+	};
+
+	it('reads as empty until something is saved', async () => {
+		const { db } = setup();
+		expect(await getCafe(db)).toEqual({
+			addressKk: null,
+			addressRu: null,
+			hoursKk: null,
+			hoursRu: null,
+			phone: null,
+			twoGisUrl: null
+		});
+	});
+
+	it('creates the single row on the first save and updates it afterwards', async () => {
+		const { db, sqlite } = setup();
+		await saveCafe(db, details);
+		expect(await getCafe(db)).toEqual(details);
+
+		await saveCafe(db, {
+			...details,
+			phone: null,
+			hoursRu: 'Круглосуточно',
+			hoursKk: 'Тәулік бойы'
+		});
+		expect(await getCafe(db)).toEqual({
+			...details,
+			phone: null,
+			hoursRu: 'Круглосуточно',
+			hoursKk: 'Тәулік бойы'
+		});
+		expect(sqlite.prepare('SELECT count(*) AS n FROM cafe_info').get()?.n).toBe(1);
 	});
 });

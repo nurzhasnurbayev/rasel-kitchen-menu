@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Logo from '$lib/brand/Logo.svelte';
 	import { ui, type Lang } from '$lib/i18n';
 	import { photoUrl } from '$lib/photos';
 	import Price from './Price.svelte';
@@ -7,89 +8,74 @@
 	let { item, lang }: { item: MenuItem; lang: Lang } = $props();
 
 	const t = $derived(ui[lang]);
-	// A single price sits on the name row; several (sizes, choices) are listed under the name.
-	const single = $derived(item.variants.length === 1 ? item.variants[0] : null);
 	// Sold-out dishes get no basket buttons.
 	const orderable = $derived(item.available);
 </script>
 
+<!--
+	A dish card: the photo on top, then the name, the description and one row per price (a single
+	price, or one row per size or choice). basket-ui.ts puts a + / − n + control in each
+	[data-basket-slot].
+-->
 <li
 	id="item-{item.id}"
 	data-anchor="item-{item.id}"
 	data-sold-out={item.available ? undefined : ''}
-	class="group flex scroll-mt-[calc(var(--sticky-h)+0.5rem)] gap-3.5 px-4 py-3.5 data-sold-out:text-ink-muted"
+	class="group flex scroll-mt-[calc(var(--sticky-h)+0.5rem)] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card data-sold-out:text-ink-muted"
 >
-	{#if item.photoKey}
-		<img
-			src={photoUrl(item.photoKey)}
-			alt=""
-			width="80"
-			height="80"
-			loading="lazy"
-			decoding="async"
-			class="size-20 shrink-0 rounded-xl bg-badge object-cover group-data-sold-out:opacity-60 group-data-sold-out:grayscale"
-		/>
-	{/if}
-
-	<div class="min-w-0 flex-1">
-		<div class="flex items-baseline justify-between gap-x-4">
-			<h3 class="min-w-0 text-[1.0625rem] leading-snug font-semibold">
-				{item.name}
-				{#if !item.available}
-					<span
-						class="ml-1 inline-block rounded-full bg-badge px-2 py-px align-[0.1em] text-[0.8125rem] leading-normal font-semibold whitespace-nowrap text-ink-soft"
-					>
-						{t.soldOut}
-					</span>
-				{/if}
-			</h3>
-			{#if single}
-				<div class="flex max-w-[60%] shrink-0 items-baseline gap-2.5">
-					<p class="text-right">
-						{#if single.label}
-							<span class="whitespace-nowrap text-ink-muted">{single.label}</span>
-							<span aria-hidden="true" class="text-ink-muted">·</span>
-						{/if}
-						<Price price={single.price} {lang} />
-					</p>
-					{#if orderable}
-						<!-- basket-ui.ts puts the + button here. The negative margin keeps the 40px button
-						     from making the card taller. -->
-						<span data-basket-slot={single.id} class="-my-2 self-center empty:hidden"></span>
-					{/if}
-				</div>
-			{/if}
-		</div>
-
-		{#if item.description}
-			<p
-				class="mt-1 text-[0.9375rem] leading-snug text-ink-soft group-data-sold-out:text-ink-muted"
+	<!-- The photos are shot on white, so their frame stays white in dark mode too. -->
+	<div class="relative aspect-square bg-white">
+		{#if item.photoKey}
+			<img
+				src={photoUrl(item.photoKey)}
+				alt=""
+				width="400"
+				height="400"
+				loading="lazy"
+				decoding="async"
+				class="size-full object-cover group-data-sold-out:opacity-50 group-data-sold-out:grayscale"
+			/>
+		{:else}
+			<!-- No photo yet: a faint monogram keeps the grid even. -->
+			<div
+				class="grid size-full place-items-center bg-badge text-line [--logo-accent:var(--color-line)]"
 			>
+				<Logo kind="mark" class="h-auto w-2/5" />
+			</div>
+		{/if}
+		{#if !item.available}
+			<span
+				class="absolute top-2 left-2 rounded-full bg-ink/85 px-2.5 py-0.5 text-[0.8125rem] font-semibold text-paper"
+			>
+				{t.soldOut}
+			</span>
+		{/if}
+	</div>
+
+	<div class="flex flex-1 flex-col px-3 pt-2.5 pb-3">
+		<h3 class="leading-snug font-semibold">{item.name}</h3>
+		{#if item.description}
+			<p class="mt-0.5 text-sm leading-snug text-ink-soft group-data-sold-out:text-ink-muted">
 				{item.description}
 			</p>
 		{/if}
 
-		{#if item.variants.length > 1}
-			<ul class="mt-2 space-y-1">
-				{#each item.variants as variant (variant.id)}
-					<!-- Wraps on narrow screens, so an open − n + never covers the price. -->
-					<li class="flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1">
-						<div class="flex min-w-[min(100%,9.5rem)] flex-1 items-baseline gap-2">
-							<span class="whitespace-nowrap text-ink-soft group-data-sold-out:text-ink-muted"
-								>{variant.label}</span
-							>
-							<span
-								aria-hidden="true"
-								class="min-w-3 flex-1 -translate-y-[0.3em] border-b-2 border-dotted border-line"
-							></span>
-							<span class="shrink-0"><Price price={variant.price} {lang} /></span>
-						</div>
-						{#if orderable}
-							<span data-basket-slot={variant.id} class="empty:hidden"></span>
+		<!-- Pushed to the bottom, so the prices of cards side by side line up. -->
+		<ul class="mt-auto space-y-1 pt-2">
+			{#each item.variants as variant (variant.id)}
+				<!-- Wraps when the − n + control is open, so it never covers the price. -->
+				<li class="flex min-h-10 flex-wrap items-center justify-between gap-x-2 gap-y-1">
+					<p class="leading-tight">
+						{#if variant.label}
+							<span class="block text-sm text-ink-muted">{variant.label}</span>
 						{/if}
-					</li>
-				{/each}
-			</ul>
-		{/if}
+						<Price price={variant.price} {lang} />
+					</p>
+					{#if orderable}
+						<span data-basket-slot={variant.id} class="ml-auto empty:hidden"></span>
+					{/if}
+				</li>
+			{/each}
+		</ul>
 	</div>
 </li>

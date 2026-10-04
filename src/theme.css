@@ -1,6 +1,10 @@
 /*
  * Design tokens and custom utilities, shared by the menu stylesheet (app.css) and the admin
  * stylesheet (routes/admin/admin.css).
+ *
+ * The colours come from the Rasel Kitchen logo: violet #aa72ab, orange #f79e45 and white.
+ * The menu uses the logo's violet colourway (white logo on a violet header). The admin panel
+ * overrides the palette with the white colourway (see routes/admin/admin.css).
  */
 
 @theme {
@@ -9,32 +13,56 @@
 		sans-serif;
 	--font-display: 'Alegreya', ui-serif, Georgia, 'Times New Roman', serif;
 
-	/* Warm "menu paper" palette. All text pairs meet WCAG AA contrast. */
-	--color-paper: #f6efe3;
-	--color-surface: #fffaf3;
-	--color-ink: #2a1c13;
-	--color-ink-soft: #5e4838;
-	--color-ink-muted: #76665a;
-	--color-line: #e3d4bd;
-	--color-accent: #b04220;
-	--color-accent-ink: #9c3a1b;
+	/*
+	 * Brand colours, exactly as in the logo. White on the logo violet has a contrast of 3.7:1:
+	 * enough for the logo and large shapes, not for small text. Text and buttons use the deeper
+	 * violets below. The orange carries dark text, never white.
+	 */
+	--color-brand: #aa72ab;
+	--color-on-brand: #ffffff;
+	--color-brand-deep: #7d447e;
+	--color-orange: #f79e45;
+	--color-on-orange: #2b1a2d;
+	/* The logo's violet part where it sits on the page background rather than on the header. */
+	--color-logo: #aa72ab;
+
+	/* Menu palette: pale lilac paper, white cards. All text pairs meet WCAG AA contrast. */
+	--color-paper: #f8f3f8;
+	--color-surface: #ffffff;
+	--color-ink: #2b1a2d;
+	--color-ink-soft: #5c4a5e;
+	--color-ink-muted: #77667a;
+	--color-line: #e8dce9;
+	/* Fills that carry white text: active tab, basket bar, main buttons. */
+	--color-accent: #935794;
+	/* Violet text on the page: links, phone number, icons. */
+	--color-accent-ink: #7d447e;
 	--color-on-accent: #ffffff;
-	--color-badge: #ece3d5;
+	--color-badge: #efe6f0;
+
+	--shadow-card: 0 1px 2px rgb(43 26 45 / 0.06);
+	--shadow-float: 0 6px 24px rgb(43 26 45 / 0.28);
 }
 
-/* Evening palette for phones in dark mode. */
+/* Evening palette for phones in dark mode: dark plum, with a slightly deeper header. */
 @media (prefers-color-scheme: dark) {
 	:root {
-		--color-paper: #1d1612;
-		--color-surface: #28201a;
-		--color-ink: #f4eadd;
-		--color-ink-soft: #cdbba7;
-		--color-ink-muted: #a8988a;
-		--color-line: #3d3027;
-		--color-accent: #e07a4f;
-		--color-accent-ink: #ee9268;
-		--color-on-accent: #1d1612;
-		--color-badge: #3a2e26;
+		--color-brand: #8a5a8c;
+		--color-logo: #f5eef6;
+
+		--color-paper: #1c141e;
+		--color-surface: #2a1f2c;
+		--color-ink: #f5eef6;
+		--color-ink-soft: #d3c4d5;
+		--color-ink-muted: #ab9bad;
+		--color-line: #43354a;
+		--color-accent: #cfa3d0;
+		--color-accent-ink: #ddb9de;
+		--color-on-accent: #1c141e;
+		--color-badge: #3a2d3c;
+
+		--shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+		--shadow-float: 0 6px 24px rgb(0 0 0 / 0.5);
 	}
 }
 

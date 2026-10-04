@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import Logo from '$lib/brand/Logo.svelte';
 	import { cafe } from '$lib/config';
 	import { LANGS, ui } from '$lib/i18n';
 
@@ -13,6 +14,7 @@
 </svelte:head>
 
 <main class="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-16 text-center">
+	<Logo kind="wordmark" label={cafe.name} class="mx-auto mb-8 h-24 w-auto text-logo" />
 	<p class="font-display text-6xl font-bold text-accent-ink">{page.status}</p>
 	{#each LANGS as lang (lang)}
 		<p {lang} class="mt-3 text-xl font-semibold first-of-type:mt-6">

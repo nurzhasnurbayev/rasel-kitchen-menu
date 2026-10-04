@@ -26,6 +26,25 @@ const kk = {
 	visibleOnMenu: 'Мәзірде көрсету',
 	emptySection: 'Бұл бөлімде әзірге тағам жоқ.',
 
+	cafeDetails: 'Кафе туралы мәлімет',
+	cafeDetailsHint:
+		'Мекенжай, жұмыс уақыты және телефон мәзірдің жоғарғы және төменгі жағында көрсетіледі. Бос қалдырылған жол мәзірде көрсетілмейді.',
+	cafeNotFilled:
+		'Әзірге толтырылмаған: қонақтар мекенжайды, жұмыс уақытын және телефонды көрмейді.',
+	editCafe: 'Өзгерту',
+	fillIn: 'Толтыру',
+	address: 'Мекенжай',
+	addressKk: 'Мекенжай (қазақша)',
+	addressRu: 'Мекенжай (орысша)',
+	hours: 'Жұмыс уақыты',
+	hoursKk: 'Жұмыс уақыты (қазақша)',
+	hoursRu: 'Жұмыс уақыты (орысша)',
+	phone: 'Телефон',
+	phoneHint: 'Қонақтар нөмірді басып, бірден қоңырау шала алады.',
+	twoGis: '2GIS сілтемесі',
+	twoGisHint: '2GIS қолданбасында кафені ашып, «Бөлісу» → «Сілтемені көшіру» дегенді басыңыз.',
+	notSet: 'көрсетілмеген',
+
 	dish: 'Тағам',
 	addDish: 'Тағам қосу',
 	newDish: 'Жаңа тағам',
@@ -91,11 +110,13 @@ const kk = {
 		required: 'Толтырыңыз',
 		tooLong: 'Тым ұзын',
 		invalidPrice: 'Бағаны теңгемен, бүтін санмен жазыңыз',
-		labelBothLanguages: 'Екі тілде де жазыңыз',
+		bothLanguages: 'Екі тілде де жазыңыз',
 		labelsRequired: 'Нұсқалар бірнешеу болса, әрқайсысына атау беріңіз',
 		atLeastOneVariant: 'Кемінде бір баға қосыңыз',
 		tooManyVariants: 'Нұсқалар тым көп',
-		unknownCategory: 'Бөлімді таңдаңыз'
+		unknownCategory: 'Бөлімді таңдаңыз',
+		invalidPhone: 'Нөмірді цифрмен жазыңыз, мысалы +7 700 000 00 00',
+		invalid2gisUrl: '2GIS сілтемесін қойыңыз, мысалы https://2gis.kz/… немесе https://go.2gis.com/…'
 	} satisfies Record<ErrorCode, string>,
 	photoErrors: {
 		missing: 'Фото таңдаңыз',
@@ -127,6 +148,24 @@ const ru: AdminDictionary = {
 	hidden: 'Скрыт',
 	visibleOnMenu: 'Показывать в меню',
 	emptySection: 'В этом разделе пока нет блюд.',
+
+	cafeDetails: 'Данные кафе',
+	cafeDetailsHint:
+		'Адрес, часы работы и телефон показываются вверху и внизу меню. Пустое поле в меню не показывается.',
+	cafeNotFilled: 'Пока не заполнено: гости не видят адрес, часы работы и телефон.',
+	editCafe: 'Изменить',
+	fillIn: 'Заполнить',
+	address: 'Адрес',
+	addressKk: 'Адрес (казахский)',
+	addressRu: 'Адрес (русский)',
+	hours: 'Часы работы',
+	hoursKk: 'Часы работы (казахский)',
+	hoursRu: 'Часы работы (русский)',
+	phone: 'Телефон',
+	phoneHint: 'Гости смогут позвонить, нажав на номер.',
+	twoGis: 'Ссылка на 2GIS',
+	twoGisHint: 'В приложении 2GIS откройте кафе и нажмите «Поделиться» → «Скопировать ссылку».',
+	notSet: 'не указано',
 
 	dish: 'Блюдо',
 	addDish: 'Добавить блюдо',
@@ -192,11 +231,13 @@ const ru: AdminDictionary = {
 		required: 'Заполните поле',
 		tooLong: 'Слишком длинно',
 		invalidPrice: 'Укажите цену в тенге целым числом',
-		labelBothLanguages: 'Заполните на обоих языках',
+		bothLanguages: 'Заполните на обоих языках',
 		labelsRequired: 'Если вариантов несколько, подпишите каждый',
 		atLeastOneVariant: 'Добавьте хотя бы одну цену',
 		tooManyVariants: 'Слишком много вариантов',
-		unknownCategory: 'Выберите раздел'
+		unknownCategory: 'Выберите раздел',
+		invalidPhone: 'Укажите номер цифрами, например +7 700 000 00 00',
+		invalid2gisUrl: 'Вставьте ссылку на 2GIS, например https://2gis.kz/… или https://go.2gis.com/…'
 	},
 	photoErrors: {
 		missing: 'Выберите фото',

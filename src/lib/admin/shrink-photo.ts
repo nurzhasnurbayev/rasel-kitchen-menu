@@ -1,11 +1,11 @@
 /**
- * Shrinks a photo in the browser before upload: at most 1200 px on the long side, WebP (or JPEG
+ * Shrinks a photo in the browser before upload: at most 800 px on the long side, WebP (or JPEG
  * where the browser cannot encode WebP, e.g. older Safari). Phone photos of 3–8 MB become roughly
- * 100–300 KB, which matters on mobile data, for guests and for the admin uploading from a phone.
+ * 50–150 KB, which matters on mobile data, for guests and for the admin uploading from a phone.
  *
  * Returns the original file if it cannot be decoded here; the server validates it either way.
  */
-const MAX_SIDE = 1200;
+const MAX_SIDE = 800;
 
 export async function shrinkPhoto(file: File): Promise<File> {
 	let bitmap: ImageBitmap;

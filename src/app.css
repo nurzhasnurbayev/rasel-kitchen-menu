@@ -68,6 +68,32 @@
 		overflow: hidden;
 	}
 
+	/*
+	 * A collapsing header: the top bar's monogram fades in as the big logo scrolls away. It is
+	 * driven by the scroll position in CSS, so it needs no script. Browsers without scroll-driven
+	 * animations (and short screens, where the bar is not pinned) always show the monogram.
+	 */
+	@supports (animation-timeline: scroll()) {
+		@media (min-height: 481px) {
+			[data-topbar-mark] {
+				animation: topbar-mark-in linear both;
+				animation-timeline: scroll(root block);
+				animation-range: 4rem 7.5rem;
+			}
+		}
+	}
+
+	@keyframes topbar-mark-in {
+		from {
+			opacity: 0;
+			visibility: hidden;
+		}
+		to {
+			opacity: 1;
+			visibility: visible;
+		}
+	}
+
 	/* On short (landscape) screens only the category tabs stay pinned; see the `short` variant. */
 	@media (max-height: 480px) {
 		:root {

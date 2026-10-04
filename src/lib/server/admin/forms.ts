@@ -7,11 +7,13 @@ export type ErrorCode =
 	| 'required'
 	| 'tooLong'
 	| 'invalidPrice'
-	| 'labelBothLanguages'
+	| 'bothLanguages'
 	| 'labelsRequired'
 	| 'atLeastOneVariant'
 	| 'tooManyVariants'
-	| 'unknownCategory';
+	| 'unknownCategory'
+	| 'invalidPhone'
+	| 'invalid2gisUrl';
 
 /** Field name (as in the form) → error. Variant fields are named `variant.<index>.<field>`. */
 export type FieldErrors = Record<string, ErrorCode>;
@@ -24,7 +26,11 @@ export const LIMITS = {
 	label: 40,
 	/** Highest accepted price, in tenge. */
 	price: 10_000_000,
-	variants: 12
+	variants: 12,
+	address: 200,
+	hours: 120,
+	phone: 40,
+	url: 300
 } as const;
 
 export interface CategoryInput {
@@ -40,6 +46,16 @@ export interface VariantInput {
 	labelRu: string | null;
 	/** Whole tenge; null means "price on request". */
 	price: number | null;
+}
+
+/** The cafe's contact details. Null means "not filled in": the menu leaves that line out. */
+export interface CafeInput {
+	addressKk: string | null;
+	addressRu: string | null;
+	hoursKk: string | null;
+	hoursRu: string | null;
+	phone: string | null;
+	twoGisUrl: string | null;
 }
 
 export interface ItemInput {
@@ -157,8 +173,7 @@ export function parseItemForm(form: FormData, categoryIds: number[]): Parsed<Ite
 			if (label && label.length > LIMITS.label) errors[field(name)] = 'tooLong';
 		}
 		// The database requires a label in both languages or in neither.
-		if (!labelKk !== !labelRu)
-			errors[field(labelKk ? 'labelRu' : 'labelKk')] = 'labelBothLanguages';
+		if (!labelKk !== !labelRu) errors[field(labelKk ? 'labelRu' : 'labelKk')] = 'bothLanguages';
 
 		variants.push({ id: parseId(form.get(field('id'))), labelKk, labelRu, price });
 	}
@@ -194,4 +209,56 @@ export function parseItemForm(form: FormData, categoryIds: number[]): Parsed<Ite
 			variants
 		}
 	};
+}
+
+/**
+ * A phone number as people write it: digits with an optional leading +, spaces, brackets and
+ * dashes. 5 to 15 digits (15 is the longest international number).
+ */
+export function isPhone(value: string): boolean {
+	const digits = value.replace(/\D/g, '').length;
+	return /^\+?[\d\s()-]+$/.test(value) && digits >= 5 && digits <= 15;
+}
+
+/**
+ * A link to 2GIS (2gis.kz, 2gis.ru, go.2gis.com, …), normalised to https. Null for anything else:
+ * the link is shown to guests, so it must not lead anywhere unexpected.
+ */
+export function parse2gisUrl(value: string): string | null {
+	let url: URL;
+	try {
+		url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+	} catch {
+		return null;
+	}
+	if (!/(^|\.)2gis\.[a-z]{2,}$/i.test(url.hostname) || url.username || url.password) return null;
+	url.protocol = 'https:';
+	return url.href;
+}
+
+/** The cafe details form. Every field may be left empty. */
+export function parseCafeForm(form: FormData): Parsed<CafeInput> {
+	const errors: FieldErrors = {};
+
+	const addressKk = optionalText(form, 'addressKk', LIMITS.address, errors);
+	const addressRu = optionalText(form, 'addressRu', LIMITS.address, errors);
+	const hoursKk = optionalText(form, 'hoursKk', LIMITS.hours, errors);
+	const hoursRu = optionalText(form, 'hoursRu', LIMITS.hours, errors);
+	// Guests read the menu in either language, and the database requires both or neither.
+	for (const [kkName, kk, ruName, ru] of [
+		['addressKk', addressKk, 'addressRu', addressRu],
+		['hoursKk', hoursKk, 'hoursRu', hoursRu]
+	] as const) {
+		if (!kk !== !ru) errors[kk ? ruName : kkName] ??= 'bothLanguages';
+	}
+
+	const phone = optionalText(form, 'phone', LIMITS.phone, errors);
+	if (phone && !errors.phone && !isPhone(phone)) errors.phone = 'invalidPhone';
+
+	const link = optionalText(form, 'twoGisUrl', LIMITS.url, errors);
+	const twoGisUrl = link ? parse2gisUrl(link) : null;
+	if (link && !errors.twoGisUrl && !twoGisUrl) errors.twoGisUrl = 'invalid2gisUrl';
+
+	if (Object.keys(errors).length) return { ok: false, errors };
+	return { ok: true, value: { addressKk, addressRu, hoursKk, hoursRu, phone, twoGisUrl } };
 }

@@ -1,8 +1,20 @@
 import type { D1Database } from '@cloudflare/workers-types';
+import type { BatchItem, BatchResponse } from 'drizzle-orm/batch';
 import { drizzle } from 'drizzle-orm/d1';
+import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 import * as schema from './schema';
 
 export type Db = ReturnType<typeof createDb>;
+
+/**
+ * What the queries are written against: the D1 client in production, an SQLite-backed client in
+ * tests. `batch` sends its statements in one round trip and runs them as one transaction.
+ */
+export type Database = BaseSQLiteDatabase<'async', unknown, typeof schema> & {
+	batch<U extends BatchItem<'sqlite'>, T extends Readonly<[U, ...U[]]>>(
+		batch: T
+	): Promise<BatchResponse<T>>;
+};
 
 function createDb(d1: D1Database) {
 	return drizzle(d1, { schema });

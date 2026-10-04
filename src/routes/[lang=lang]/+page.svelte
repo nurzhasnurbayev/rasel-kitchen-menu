@@ -33,6 +33,12 @@
 	<meta property="og:title" content={title} />
 	<meta property="og:description" content={description} />
 	<meta property="og:url" content="{origin}/{data.lang}" />
+	<!-- The logo on its violet, shown when the link is shared (WhatsApp, Telegram, …). -->
+	<meta property="og:image" content="{origin}/og.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content={cafe.name} />
+	<meta name="twitter:card" content="summary_large_image" />
 	<meta property="og:locale" content={t.locale} />
 	{#each LANGS.filter((lang) => lang !== data.lang) as lang (lang)}
 		<meta property="og:locale:alternate" content={ui[lang].locale} />
@@ -47,7 +53,7 @@
 </a>
 
 <TopBar lang={data.lang} />
-<CafeInfo lang={data.lang} />
+<CafeInfo lang={data.lang} details={data.cafe} />
 
 <main id="menu">
 	{#if data.menu.length > 0}
@@ -64,7 +70,7 @@
 	{/if}
 </main>
 
-<SiteFooter lang={data.lang} />
+<SiteFooter lang={data.lang} details={data.cafe} />
 <div data-menu-end aria-hidden="true" class="h-px"></div>
 
 <Basket menu={data.menu} lang={data.lang} />

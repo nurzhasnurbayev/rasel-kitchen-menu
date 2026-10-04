@@ -1,9 +1,17 @@
 import { and, asc, eq, notInArray, sql } from 'drizzle-orm';
-import type { BatchItem, BatchResponse } from 'drizzle-orm/batch';
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
-import * as schema from '../db/schema';
-import { categories, items, variants, type Category, type Item, type Variant } from '../db/schema';
-import type { CategoryInput, ItemInput } from './forms';
+import type { BatchItem } from 'drizzle-orm/batch';
+import type { Database } from '../db';
+import {
+	cafeInfo,
+	categories,
+	items,
+	variants,
+	type CafeInfoRow,
+	type Category,
+	type Item,
+	type Variant
+} from '../db/schema';
+import type { CafeInput, CategoryInput, ItemInput } from './forms';
 
 /**
  * Reads and writes for the admin panel.
@@ -13,11 +21,7 @@ import type { CategoryInput, ItemInput } from './forms';
  */
 
 /** The D1 client in production; an SQLite-backed one in tests. */
-export type AdminDb = BaseSQLiteDatabase<'async', unknown, typeof schema> & {
-	batch<U extends BatchItem<'sqlite'>, T extends Readonly<[U, ...U[]]>>(
-		batch: T
-	): Promise<BatchResponse<T>>;
-};
+export type AdminDb = Database;
 
 type Statement = BatchItem<'sqlite'>;
 const asBatch = (statements: Statement[]) => statements as [Statement, ...Statement[]];
@@ -335,4 +339,32 @@ export async function setItemPhoto(
 		db.update(items).set({ photoKey }).where(eq(items.id, id))
 	]);
 	return before[0] ? { oldKey: before[0].photoKey } : undefined;
+}
+
+// --- Cafe details -------------------------------------------------------------------------------
+
+/** Address, hours, phone and 2GIS link, in both languages. */
+export type CafeDetails = Omit<CafeInfoRow, 'id'>;
+
+const CAFE_ROW_ID = 1;
+
+/** The saved details; every field is null until the admin fills it in. */
+export async function getCafe(db: AdminDb): Promise<CafeDetails> {
+	const [row] = await db.select().from(cafeInfo).where(eq(cafeInfo.id, CAFE_ROW_ID));
+	return {
+		addressKk: row?.addressKk ?? null,
+		addressRu: row?.addressRu ?? null,
+		hoursKk: row?.hoursKk ?? null,
+		hoursRu: row?.hoursRu ?? null,
+		phone: row?.phone ?? null,
+		twoGisUrl: row?.twoGisUrl ?? null
+	};
+}
+
+/** Saves the details: the first save creates the single row, later ones update it. */
+export async function saveCafe(db: AdminDb, input: CafeInput): Promise<void> {
+	await db
+		.insert(cafeInfo)
+		.values({ id: CAFE_ROW_ID, ...input })
+		.onConflictDoUpdate({ target: cafeInfo.id, set: input });
 }

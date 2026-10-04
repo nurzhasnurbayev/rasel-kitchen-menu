@@ -20,12 +20,15 @@
 		class="flex items-center gap-3 font-display text-[1.75rem] leading-tight font-bold"
 	>
 		<span>{category.name}</span>
-		<span aria-hidden="true" class="h-px flex-1 translate-y-[0.15em] bg-line"></span>
+		<!-- A short stroke in the logo orange, then a hairline to the edge. -->
+		<span aria-hidden="true" class="flex flex-1 translate-y-[0.15em] items-center gap-1.5">
+			<span class="h-[3px] w-5 rounded-full bg-orange"></span>
+			<span class="h-px flex-1 bg-line"></span>
+		</span>
 	</h2>
 
-	<ul
-		class="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgb(42_28_19/0.05)]"
-	>
+	<!-- Two cards per row on phones, three on wider screens. -->
+	<ul class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
 		{#each category.items as item (item.id)}
 			<MenuItemCard {item} {lang} />
 		{/each}

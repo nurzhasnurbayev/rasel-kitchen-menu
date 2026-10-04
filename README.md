@@ -7,9 +7,10 @@ their table.
 - Server-rendered from Cloudflare D1, cached at the edge, readable with JavaScript disabled.
 - A **guest basket**: guests pick dishes and sizes, then show a large-print summary to the waiter.
   It lives on the guest's phone only; there are no server-side orders.
-- An **admin panel** at `/admin` (Kazakh / Russian) for categories, dishes, sizes, prices and
-  photos, protected by Cloudflare Access.
+- An **admin panel** at `/admin` (Kazakh / Russian) for categories, dishes, sizes, prices,
+  photos and the cafe's address, hours and phone, protected by Cloudflare Access.
 - Dish photos are served from Cloudflare R2; every dish starts without one.
+- Styled with the cafe's logo and its colours, violet and orange.
 
 ## Stack
 
@@ -52,10 +53,13 @@ locally go to a local R2 emulation in `.wrangler/`.
 
 These steps act on the Cloudflare account.
 
-> **Status (2026-10-03):** steps 1–4 are done. The D1 database `rasel-kitchen-menu` (region
+> **Status (2026-10-04):** steps 1–4 are done. The D1 database `rasel-kitchen-menu` (region
 > EEUR) is created, its ID is in `wrangler.jsonc`, and it is migrated and seeded. The R2 bucket
 > `rasel-kitchen-photos` exists. Still to do: deploy (step 5), add a domain (step 6), and set up
 > the admin panel (steps 7–8). Until step 7 is done, `/admin` answers 503 in production.
+>
+> One migration was added after step 4 (`0002_cafe_info`, the cafe details table), so run
+> `npm run db:migrate:remote` once more before the first deploy.
 
 1. **Log in**
 
@@ -151,9 +155,13 @@ Schema: `src/lib/server/db/schema.ts`. Prices are whole tenge. Every guest-facin
   `price?` (null = "price on request"), `sort_order`. Every item has at least one variant. A
   single-price item has one variant with null labels; sized items (1 л / 0,5 л) have one per size
   and are shown as one card.
+- **`cafe_info`**: the cafe's contact details, a single row (`id` 1) created by the first save in
+  the admin panel: `address_kk?`, `address_ru?`, `hours_kk?`, `hours_ru?` (free text), `phone?`,
+  `two_gis_url?`. Null means "not filled in": the menu leaves that line out.
 
 The database also has some guard rails. Prices can't be negative. A variant label must be given
-in both languages or in neither. A category that still has items can't be deleted.
+in both languages or in neither, and so must the address and the hours. A category that still has
+items can't be deleted.
 
 ### Seeding
 
@@ -165,6 +173,9 @@ migrations**:
 
 Wrangler records applied migrations in the `d1_migrations` table, so each database gets the seed
 exactly once. Running the remote migrate command again later can never overwrite menu changes.
+
+The cafe's address, hours and phone are not seeded: `0002_cafe_info.sql` only creates their
+table. They are typed in on the admin panel's "cafe details" page.
 
 ### Changing the schema
 
@@ -193,6 +204,34 @@ npx wrangler d1 execute DB --local  --command "SELECT id, name_ru FROM items"
 
 Changes show up on the site within about a minute, the edge cache lifetime.
 
+### Dish photos
+
+A photo belongs to a dish through the dish's `photo_key`: the name of the file in the R2 bucket,
+such as `items/23/<random>.webp` for dish 23 (Компот). You never type these keys; they are made when
+a photo is uploaded. Two ways to upload:
+
+- **One dish at a time**, in the admin panel: open the dish (`/admin/items/<number>`), choose the
+  photo in the "Фото" section and upload it. The browser shrinks it first.
+- **Many dishes at once**, with `scripts/upload-photos.py` (needs `pip3 install pillow`). Name each
+  file after the dish's number (`01.png`, `23.png`, `23-kompot.jpg`, …), put them in one folder
+  (`photos/` in the project is ignored by git) and run:
+
+  ```bash
+  python3 scripts/upload-photos.py photos --dry-run   # check which file goes to which dish
+  python3 scripts/upload-photos.py photos             # local database, see it with npm run dev
+  python3 scripts/upload-photos.py photos --remote    # Cloudflare
+  ```
+
+  Each photo is converted to WebP (at most 800 px), stored under a new key and linked to its dish;
+  a photo the dish had before is deleted. Run it again with new files to replace photos.
+
+The dish numbers are the ids in the database. For the opening menu they run from 1 (Сорпа) to 37
+(Кимчи) in menu order; this lists them:
+
+```bash
+npx wrangler d1 execute DB --remote --command "SELECT id, name_ru FROM items ORDER BY id"
+```
+
 ## How it works
 
 **Languages.** Routes are `/kk` and `/ru` (`src/routes/[lang=lang]`; anything else is a 404). `/`
@@ -203,7 +242,8 @@ also saves the choice in the cookie and opens the other language at the same dis
 canonical link. Interface strings live in `src/lib/i18n.ts`, a small typed dictionary.
 
 **Rendering and caching.** `src/routes/[lang=lang]/+page.server.ts` loads the menu with one SQL
-query (joins, no N+1) and sends `Cache-Control: public, s-maxage=60, stale-while-revalidate=300`.
+query (joins, no N+1) and the cafe details with a second, both sent to D1 at the same time, and
+sends `Cache-Control: public, s-maxage=60, stale-while-revalidate=300`.
 The adapter's Worker stores such responses in Cloudflare's edge cache, so most guests never hit
 D1. Edge caching has three limits:
 
@@ -225,9 +265,9 @@ about 3.6 KB gzipped together:
 - `src/lib/menu/basket-ui.ts` (about 2.3 KB): the guest basket (below).
 
 Without JavaScript the tabs are plain anchor links, the basket does not appear, and everything
-stays readable. Motion respects `prefers-reduced-motion`. The CSS (about 27 KB) is inlined, and the
-two fonts are preloaded, so the first visit needs only the HTML (about 17 KB gzipped) and two font
-files. The admin panel has its own stylesheet (`src/routes/admin/admin.css`), so its styles are not
+stays readable. Motion respects `prefers-reduced-motion`. The CSS (about 29 KB) and the logo are
+inlined, and the two fonts are preloaded, so the first visit needs only the HTML (about 21 KB
+gzipped) and two font files. The admin panel has its own stylesheet (`src/routes/admin/admin.css`), so its styles are not
 sent to guests.
 
 **Guest basket.** Each dish (each size, for dishes with several) gets a **+** button. Once something
@@ -271,22 +311,39 @@ Russian, Kazakh, ₸ and common punctuation. That gives one file per family (32 
 where Google Fonts would serve four. Both fonts are under the SIL Open Font License; the licence
 files sit next to the fonts.
 
+**Logo and colours.** The logo is inline SVG (`src/lib/brand/`), traced from the designer's PNG
+files: the full "Rasel kitchen" logo and the RK monogram for small sizes. It is drawn once per
+page and reused with `<use>`. Its violet part takes the text colour, so the same artwork is white
+on the violet header and violet on a white page. The colours are tokens in `src/theme.css`:
+
+- the **menu** uses the logo's violet colourway: a violet header with the white and orange logo,
+  pale lilac pages, and a dark plum palette for phones in dark mode;
+- the **admin panel** uses the white colourway (`src/routes/admin/admin.css`): white pages with
+  the violet and orange logo, and it stays light in dark mode.
+
+White text on the logo violet (`#aa72ab`) has a contrast of only 3.7:1, so that violet is kept for
+the header behind the logo. Buttons, tabs and violet text use deeper violets that pass WCAG AA,
+and the orange (`#f79e45`) only ever carries dark text.
+
 ## Customising
 
-- **Cafe details** (name, logo, address, hours, phone, 2GIS link): `src/lib/config.ts`. All
-  values there are placeholders.
-- **Logo**: put a file in `static/` (e.g. `static/logo.svg`) and set `logo: '/logo.svg'` in
-  `config.ts`. Replace `static/favicon.svg` too.
+- **Address, opening hours, phone, 2GIS link**: in the admin panel, on the "cafe details" page
+  (`/admin/cafe`). A field left empty is not shown on the menu.
+- **Cafe name** (page titles, link previews): `src/lib/config.ts`.
+- **Logo**: `src/lib/brand/logo-art.ts` holds the SVG paths. If the designer's vector file turns
+  up, paste its paths there. The icons in `static/` (`favicon.svg`, `apple-touch-icon.png`, and
+  `og.png` for link previews) are made from the same logo.
 - **Interface text** (both languages): `src/lib/i18n.ts` for guests, `src/lib/admin/i18n.ts` for
   the admin panel. The basket wording (e.g. **Даяшыға көрсету** / **Показать официанту**) and the
   admin texts have not been checked by a native Kazakh speaker yet.
-- **Colours and fonts**: `src/app.css` (light and dark palettes; all text colours meet WCAG AA
-  contrast)
+- **Colours**: `src/theme.css` for the menu (light and dark palettes), and
+  `src/routes/admin/admin.css` for the admin panel. All text colours meet WCAG AA contrast.
+- **Fonts**: `src/app.css` and `scripts/build-fonts.py`.
 
 ## Project structure
 
 ```
-├── drizzle/migrations/          SQL migrations (0000 schema, 0001 menu seed) + drizzle-kit metadata
+├── drizzle/migrations/          SQL migrations (0000 schema, 0001 menu seed, 0002 cafe details) + metadata
 ├── scripts/build-fonts.py       Builds the subset web fonts
 ├── src/
 │   ├── app.css                  Menu stylesheet: Tailwind, fonts, base styles
@@ -296,7 +353,8 @@ files sit next to the fonts.
 │   ├── hooks.server.ts          Admin access check, <html lang>, font preloading, headers
 │   ├── params/lang.ts           Route matcher: only kk | ru
 │   ├── lib/
-│   │   ├── config.ts            Cafe details (placeholders to fill in)
+│   │   ├── config.ts            The cafe's name
+│   │   ├── brand/               The logo: SVG paths and the <Logo> component
 │   │   ├── i18n.ts              Languages + UI dictionary
 │   │   ├── format.ts            Price formatting ("2 000 ₸")
 │   │   ├── photos.ts            R2 photo keys → /img URLs
@@ -314,10 +372,10 @@ files sit next to the fonts.
 │   └── routes/
 │       ├── +server.ts           "/" → /kk or /ru
 │       ├── [lang=lang]/         The menu page
-│       ├── admin/               Admin panel (overview, items/new, items/[id])
+│       ├── admin/               Admin panel (overview, cafe details, items/new, items/[id])
 │       ├── img/[...key]/        Photos from R2
 │       └── +error.svelte        Bilingual 404 / error page
-├── static/                      favicon, robots.txt
+├── static/                      favicon, touch icon, link-preview image, robots.txt
 ├── drizzle.config.ts            drizzle-kit (generates migrations only)
 ├── svelte.config.js
 ├── vite.config.ts               Includes the small plugin that minifies the inline script
@@ -329,14 +387,18 @@ files sit next to the fonts.
 `/admin`, in Kazakh or Russian (the same КЗ / РУ switch as the menu; the choice is shared with it).
 It works on a phone.
 
-- **Overview** (`/admin`): every category with its dishes. Reorder categories and dishes with
-  ↑ ↓, mark a dish sold out or back in stock with one tap, rename, hide or delete a category (only
-  an empty one), add categories and dishes.
+- **Overview** (`/admin`): the cafe details at the top, then every category with its dishes.
+  Reorder categories and dishes with ↑ ↓, mark a dish sold out or back in stock with one tap,
+  rename, hide or delete a category (only an empty one), add categories and dishes.
+- **Cafe details** (`/admin/cafe`): address and opening hours in both languages, phone, and the
+  link to the cafe on 2GIS. They appear in the menu's header and footer; the phone becomes a
+  tap-to-call link. Every field is optional, and an empty one is left off the menu. The address
+  and the hours must be given in both languages or in neither. Only links to 2GIS are accepted.
 - **Dish page** (`/admin/items/<id>`): category, names and descriptions in both languages, "in
   stock", and the prices. A dish has one or more variants (sizes or choices such as 1 л / 0,5 л),
   each with a label in both languages and a price in whole tenge, or "price on request". Labels are
   required when there are several variants. Variants can be added, removed and reordered.
-- **Photos**: shrunk in the browser before upload (max 1200 px, WebP, or JPEG where the browser
+- **Photos**: shrunk in the browser before upload (max 800 px, WebP, or JPEG where the browser
   can't write WebP), checked on the server by their first bytes (JPEG, PNG or WebP, max 5 MB), and
   stored in R2 under a new random key each time (`items/<id>/<uuid>.webp`). After the dish points
   at the new photo, the old object is deleted. An object is never overwritten, because `/img`

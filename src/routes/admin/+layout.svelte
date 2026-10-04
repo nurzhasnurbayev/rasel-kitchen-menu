@@ -1,9 +1,9 @@
 <script lang="ts">
 	import './admin.css';
 	import { adminUi } from '$lib/admin/i18n';
+	import Logo from '$lib/brand/Logo.svelte';
 	import { cafe } from '$lib/config';
 	import LangSwitcher from '$lib/menu/LangSwitcher.svelte';
-	import Logo from '$lib/menu/Logo.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -21,12 +21,12 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<header class="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur-md">
+<!-- data-admin switches the page to the admin palette (see admin.css). -->
+<header data-admin class="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur-md">
 	<div class="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
-		<a href="/admin" class="-ml-1 flex min-w-0 items-center gap-2.5 rounded-full p-1">
-			<Logo size={30} />
-			<span class="truncate font-display text-xl leading-none font-bold">{cafe.name}</span>
-			<span class="hidden truncate text-sm text-ink-soft sm:inline">{t.title}</span>
+		<a href="/admin" class="-ml-1 flex min-w-0 items-center gap-3 rounded-xl p-1">
+			<Logo kind="mark" label={cafe.name} class="h-9 w-auto shrink-0 text-logo" />
+			<span class="truncate font-display text-xl leading-none font-bold">{t.title}</span>
 		</a>
 		<div class="ml-auto">
 			<LangSwitcher lang={data.lang} href={(option) => `?lang=${option}`} remember={false} />

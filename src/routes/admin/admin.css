@@ -8,3 +8,29 @@
 
 @source '../../lib/admin';
 @source '.';
+
+/*
+ * The admin panel uses the logo's white colourway: white pages with the violet and orange logo.
+ * It stays light in dark mode, so it looks the same to everyone who edits the menu.
+ * [data-admin] is on the admin header (routes/admin/+layout.svelte).
+ */
+:root:has([data-admin]) {
+	color-scheme: light;
+
+	--color-brand: #aa72ab;
+	--color-logo: #aa72ab;
+
+	--color-paper: #ffffff;
+	--color-surface: #ffffff;
+	--color-ink: #2b1a2d;
+	--color-ink-soft: #5c4a5e;
+	--color-ink-muted: #77667a;
+	--color-line: #e6dbe7;
+	--color-accent: #935794;
+	--color-accent-ink: #7d447e;
+	--color-on-accent: #ffffff;
+	--color-badge: #f3ecf4;
+
+	--shadow-card: 0 1px 2px rgb(43 26 45 / 0.06);
+	--shadow-float: 0 6px 24px rgb(43 26 45 / 0.28);
+}

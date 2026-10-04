@@ -5,6 +5,7 @@ import {
 	createCategory,
 	deleteCategory,
 	getAdminMenu,
+	getCafe,
 	moveCategory,
 	moveItem,
 	setItemAvailable,
@@ -13,7 +14,9 @@ import {
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
-	return { menu: await getAdminMenu(adminDb(event)) };
+	const db = adminDb(event);
+	const [menu, cafe] = await Promise.all([getAdminMenu(db), getCafe(db)]);
+	return { menu, cafe };
 };
 
 /**
