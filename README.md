@@ -348,18 +348,28 @@ and the orange (`#f79e45`) only ever carries dark text.
 - **Colours**: `src/theme.css` for the menu (light and dark palettes), and
   `src/routes/admin/admin.css` for the admin panel. All text colours meet WCAG AA contrast.
 - **Fonts**: `src/app.css` and `scripts/build-fonts.py`.
+- **Table QR code**: `print/table-card.pdf` is an A6 card (105 × 148 mm) for the tables, with the
+  logo, "Мәзір · Меню" and the QR code for `https://rasel-kitchen.app`. It is vector with white
+  margins, so a print shop or any printer can use it as it is. `print/table-card.png` is the same
+  at 300 dpi, and `print/qr-code.svg` / `qr-code.png` are the bare code. After changing the
+  address or the logo, run `python3 scripts/make-table-card.py [url]` (macOS only: it makes the
+  code with Core Image and checks that the finished card scans).
 
 ## Project structure
 
 ```
 ├── drizzle/migrations/          SQL migrations (0000 schema, 0001 menu seed, 0002 cafe details) + metadata
-├── scripts/build-fonts.py       Builds the subset web fonts
+├── print/                       Table card with the QR code (PDF, PNG) and the bare QR code
+├── scripts/
+│   ├── build-fonts.py           Builds the subset web fonts
+│   ├── upload-photos.py         Uploads a folder of dish photos and links them to their dishes
+│   └── make-table-card.py       Makes the files in print/
 ├── src/
 │   ├── app.css                  Menu stylesheet: Tailwind, fonts, base styles
 │   ├── theme.css                Colour palette and custom utilities (shared with the admin CSS)
 │   ├── app.d.ts                 App.Platform / Env typing for the Cloudflare bindings and vars
 │   ├── app.html
-│   ├── hooks.server.ts          Admin access check, <html lang>, font preloading, headers
+│   ├── hooks.server.ts          Domain redirect, admin access check, <html lang>, preloading, headers
 │   ├── params/lang.ts           Route matcher: only kk | ru
 │   ├── lib/
 │   │   ├── config.ts            The cafe's name
@@ -375,6 +385,7 @@ and the orange (`#f79e45`) only ever carries dark text.
 │   │       ├── db/              Drizzle schema + D1 client (+ test-db.ts for tests)
 │   │       ├── menu.ts          Menu query (one query, grouped in code)
 │   │       ├── lang.ts          Accept-Language / cookie negotiation
+│   │       ├── canonical.ts     www. / workers.dev → the domain
 │   │       ├── access.ts        Cloudflare Access JWT verification
 │   │       ├── purge.ts         Cache purge after admin saves
 │   │       └── admin/           Admin form validation, queries/batches, photo checks
