@@ -68,7 +68,8 @@ export async function getMenuPage(db: Database, lang: Lang): Promise<MenuPage> {
 				address: kk ? cafeInfo.addressKk : cafeInfo.addressRu,
 				hours: kk ? cafeInfo.hoursKk : cafeInfo.hoursRu,
 				phone: cafeInfo.phone,
-				twoGisUrl: cafeInfo.twoGisUrl
+				twoGisUrl: cafeInfo.twoGisUrl,
+				notes: kk ? cafeInfo.notesKk : cafeInfo.notesRu
 			})
 			.from(cafeInfo)
 			.where(eq(cafeInfo.id, 1))
@@ -82,7 +83,11 @@ export async function getMenuPage(db: Database, lang: Lang): Promise<MenuPage> {
 			address: saved?.address?.trim() || null,
 			hours: saved?.hours?.trim() || null,
 			phone: saved?.phone?.trim() || null,
-			twoGisUrl: saved?.twoGisUrl?.trim() || null
+			twoGisUrl: saved?.twoGisUrl?.trim() || null,
+			notes: (saved?.notes ?? '')
+				.split('\n')
+				.map((note) => note.trim())
+				.filter(Boolean)
 		}
 	};
 }

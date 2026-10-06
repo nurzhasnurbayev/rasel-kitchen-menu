@@ -91,13 +91,17 @@ export const cafeInfo = sqliteTable(
 		/** As it should be shown, e.g. "+7 700 000 00 00"; the tap-to-call link uses its digits. */
 		phone: text('phone'),
 		/** Link to the cafe's page on 2GIS. */
-		twoGisUrl: text('two_gis_url')
+		twoGisUrl: text('two_gis_url'),
+		/** Notes for guests, one per line, e.g. "Обслуживание 10%". */
+		notesKk: text('notes_kk'),
+		notesRu: text('notes_ru')
 	},
 	(t) => [
 		check('cafe_info_single_row', sql`id = 1`),
 		// Like variant labels: given in both languages or in neither.
 		check('cafe_info_address_both_or_none', sql`(address_kk IS NULL) = (address_ru IS NULL)`),
-		check('cafe_info_hours_both_or_none', sql`(hours_kk IS NULL) = (hours_ru IS NULL)`)
+		check('cafe_info_hours_both_or_none', sql`(hours_kk IS NULL) = (hours_ru IS NULL)`),
+		check('cafe_info_notes_both_or_none', sql`(notes_kk IS NULL) = (notes_ru IS NULL)`)
 	]
 );
 

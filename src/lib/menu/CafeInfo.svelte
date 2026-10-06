@@ -7,9 +7,10 @@
 
 	let { lang, details }: { lang: Lang; details: CafeInfo } = $props();
 	const t = $derived(ui[lang]);
-	const hasDetails = $derived(
+	const hasContacts = $derived(
 		!!(details.address || details.hours || details.phone || details.twoGisUrl)
 	);
+	const hasDetails = $derived(hasContacts || details.notes.length > 0);
 </script>
 
 <!-- The logo on its violet, like the cover of a printed menu. It continues the top bar. -->
@@ -65,6 +66,18 @@
 					</a>
 				</li>
 			{/if}
+			<!-- The cafe's notes for guests (e.g. "Обслуживание 10%"), set off from the contacts. -->
+			{#each details.notes as note, i (i)}
+				<li
+					class={[
+						'flex min-h-9 items-start gap-2.5 py-1.5 font-medium text-ink',
+						i === 0 && hasContacts && 'mt-1.5 border-t border-line pt-3'
+					]}
+				>
+					<Icon name="info" class="mt-[0.2em] size-[1.125rem] text-accent-ink" />
+					<p>{note}</p>
+				</li>
+			{/each}
 		</ul>
 	</div>
 {/if}

@@ -15,10 +15,16 @@ export const actions: Actions = {
 		if (!parsed.ok) {
 			// Hand back what was typed, so the form does not fall back to the saved values.
 			const values = Object.fromEntries(
-				['addressKk', 'addressRu', 'hoursKk', 'hoursRu', 'phone', 'twoGisUrl'].map((name) => [
-					name,
-					String(form.get(name) ?? '')
-				])
+				[
+					'addressKk',
+					'addressRu',
+					'hoursKk',
+					'hoursRu',
+					'phone',
+					'twoGisUrl',
+					'notesKk',
+					'notesRu'
+				].map((name) => [name, String(form.get(name) ?? '')])
 			);
 			return fail(400, { errors: parsed.errors, values });
 		}

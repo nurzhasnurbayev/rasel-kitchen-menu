@@ -357,7 +357,9 @@ export async function getCafe(db: AdminDb): Promise<CafeDetails> {
 		hoursKk: row?.hoursKk ?? null,
 		hoursRu: row?.hoursRu ?? null,
 		phone: row?.phone ?? null,
-		twoGisUrl: row?.twoGisUrl ?? null
+		twoGisUrl: row?.twoGisUrl ?? null,
+		notesKk: row?.notesKk ?? null,
+		notesRu: row?.notesRu ?? null
 	};
 }
 

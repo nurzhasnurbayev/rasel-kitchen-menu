@@ -39,15 +39,26 @@
 			.join(' · ');
 	}
 
+	/** A line of the summary card. `oneLine` cuts it off with an ellipsis; `lines` keeps its line breaks. */
+	interface SummaryRow {
+		label: string;
+		value?: string | null;
+		oneLine?: boolean;
+		lines?: boolean;
+	}
+
 	/** The cafe details in the admin's language, for the summary card. */
 	const cafeSummary = $derived(
-		[
-			{ label: t.address, value: kk ? data.cafe.addressKk : data.cafe.addressRu },
-			{ label: t.hours, value: kk ? data.cafe.hoursKk : data.cafe.hoursRu },
-			{ label: t.phone, value: data.cafe.phone },
-			// Shown without "https://", cut off with an ellipsis if it does not fit.
-			{ label: '2GIS', value: data.cafe.twoGisUrl?.replace(/^https?:\/\//, ''), oneLine: true }
-		].filter((row): row is { label: string; value: string; oneLine?: boolean } => !!row.value)
+		(
+			[
+				{ label: t.address, value: kk ? data.cafe.addressKk : data.cafe.addressRu },
+				{ label: t.hours, value: kk ? data.cafe.hoursKk : data.cafe.hoursRu },
+				{ label: t.phone, value: data.cafe.phone },
+				// Shown without "https://".
+				{ label: '2GIS', value: data.cafe.twoGisUrl?.replace(/^https?:\/\//, ''), oneLine: true },
+				{ label: t.notes, value: kk ? data.cafe.notesKk : data.cafe.notesRu, lines: true }
+			] satisfies SummaryRow[] as SummaryRow[]
+		).filter((row): row is SummaryRow & { value: string } => !!row.value)
 	);
 
 	const errorsFor = (formId: string) =>
@@ -73,7 +84,15 @@
 				{#each cafeSummary as row (row.label)}
 					<div class="flex gap-3">
 						<dt class="w-[6.5rem] shrink-0 text-sm leading-6 text-ink-muted">{row.label}</dt>
-						<dd class={['min-w-0', row.oneLine ? 'truncate' : 'break-words']}>{row.value}</dd>
+						<dd
+							class={[
+								'min-w-0',
+								row.oneLine ? 'truncate' : 'break-words',
+								row.lines && 'whitespace-pre-line'
+							]}
+						>
+							{row.value}
+						</dd>
 					</div>
 				{/each}
 			</dl>

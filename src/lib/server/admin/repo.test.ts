@@ -256,7 +256,9 @@ describe('cafe details', () => {
 		hoursKk: 'Күн сайын 10:00–22:00',
 		hoursRu: 'Ежедневно 10:00–22:00',
 		phone: '+7 700 000 00 00',
-		twoGisUrl: 'https://go.2gis.com/abcde'
+		twoGisUrl: 'https://go.2gis.com/abcde',
+		notesKk: 'Қызмет көрсету 10%',
+		notesRu: 'Обслуживание 10%'
 	};
 
 	it('reads as empty until something is saved', async () => {
@@ -267,7 +269,9 @@ describe('cafe details', () => {
 			hoursKk: null,
 			hoursRu: null,
 			phone: null,
-			twoGisUrl: null
+			twoGisUrl: null,
+			notesKk: null,
+			notesRu: null
 		});
 	});
 

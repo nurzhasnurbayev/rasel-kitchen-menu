@@ -30,4 +30,6 @@ export interface CafeInfo {
 	/** As it should be shown, e.g. "+7 700 000 00 00". */
 	phone: string | null;
 	twoGisUrl: string | null;
+	/** Notes for guests such as "Обслуживание 10%", one per entry; empty when there are none. */
+	notes: string[];
 }

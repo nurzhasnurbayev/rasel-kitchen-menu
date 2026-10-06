@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { migratedSqlite as migratedDb } from './test-db';
+import { applyMigrations, emptySqlite, migratedSqlite as migratedDb } from './test-db';
 
 /*
  * Applies the real migration files (schema + menu seed), in order, to an in-memory SQLite
@@ -112,6 +112,33 @@ describe('schema constraints', () => {
 		expect(() =>
 			db.prepare("UPDATE cafe_info SET address_kk = 'Абай даңғылы, 1' WHERE id = 1").run()
 		).toThrow(/CHECK/);
+		expect(() =>
+			db.prepare("UPDATE cafe_info SET notes_ru = 'Обслуживание 10%' WHERE id = 1").run()
+		).toThrow(/CHECK/);
+	});
+
+	it('keeps saved cafe details when 0003 rebuilds the table for the notes', () => {
+		const db = emptySqlite();
+		const before0003 = (path: string) => path < '/drizzle/migrations/0003';
+		applyMigrations(db, before0003);
+		db.prepare(
+			`INSERT INTO cafe_info (id, address_kk, address_ru, hours_kk, hours_ru, phone, two_gis_url)
+			 VALUES (1, 'Абай даңғылы, 1', 'пр. Абая, 1', 'Күн сайын', 'Ежедневно', '+7 700', 'https://2gis.kz/x')`
+		).run();
+
+		applyMigrations(db, (path) => !before0003(path));
+
+		expect({ ...db.prepare('SELECT * FROM cafe_info').get() }).toEqual({
+			id: 1,
+			address_kk: 'Абай даңғылы, 1',
+			address_ru: 'пр. Абая, 1',
+			hours_kk: 'Күн сайын',
+			hours_ru: 'Ежедневно',
+			phone: '+7 700',
+			two_gis_url: 'https://2gis.kz/x',
+			notes_kk: null,
+			notes_ru: null
+		});
 	});
 
 	it('refuses to delete a category that still has items', () => {

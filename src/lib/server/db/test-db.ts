@@ -12,10 +12,24 @@ const migrations = import.meta.glob<string>('/drizzle/migrations/*.sql', {
 	eager: true
 });
 
-export function migratedSqlite() {
+/**
+ * Applies, in order, the migration files whose path (e.g. "/drizzle/migrations/0003_cafe_notes.sql")
+ * `include` accepts: all of them by default.
+ */
+export function applyMigrations(db: DatabaseSync, include: (path: string) => boolean = () => true) {
+	for (const file of Object.keys(migrations).sort()) if (include(file)) db.exec(migrations[file]);
+}
+
+/** An empty in-memory database that, like D1, enforces foreign keys. */
+export function emptySqlite() {
 	const db = new DatabaseSync(':memory:');
-	db.exec('PRAGMA foreign_keys = ON'); // D1 always enforces foreign keys
-	for (const file of Object.keys(migrations).sort()) db.exec(migrations[file]);
+	db.exec('PRAGMA foreign_keys = ON');
+	return db;
+}
+
+export function migratedSqlite() {
+	const db = emptySqlite();
+	applyMigrations(db);
 	return db;
 }
 

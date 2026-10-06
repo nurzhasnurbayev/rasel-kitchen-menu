@@ -46,6 +46,11 @@
 			placeholder: 'Ежедневно 10:00–22:00'
 		}
 	] as const);
+
+	const noteFields = $derived([
+		{ name: 'notesKk', text: t.notesKk, lang: 'kk', placeholder: 'Қызмет көрсету 10%' },
+		{ name: 'notesRu', text: t.notesRu, lang: 'ru', placeholder: 'Обслуживание 10%' }
+	] as const);
 </script>
 
 <svelte:head>
@@ -144,6 +149,31 @@
 				<p id="twoGisUrl-hint" class="mt-1 text-sm text-ink-muted">{t.twoGisHint}</p>
 			{/if}
 		</div>
+	</div>
+
+	<div>
+		<div class="grid gap-4 sm:grid-cols-2">
+			{#each noteFields as field (field.name)}
+				<div>
+					<label for={field.name} class={label}>{field.text}</label>
+					<textarea
+						id={field.name}
+						name={field.name}
+						lang={field.lang}
+						rows="3"
+						maxlength="400"
+						placeholder={field.placeholder}
+						aria-invalid={errors[field.name] ? 'true' : undefined}
+						aria-describedby={errors[field.name] ? `${field.name}-error` : 'notes-hint'}
+						value={value(field.name)}
+						class={input}></textarea>
+					{#if errors[field.name]}
+						<p id="{field.name}-error" class={fieldError}>{t.errors[errors[field.name]]}</p>
+					{/if}
+				</div>
+			{/each}
+		</div>
+		<p id="notes-hint" class="mt-1 text-sm text-ink-muted">{t.notesHint}</p>
 	</div>
 
 	<div class="sticky bottom-0 -mx-4 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur-md">

@@ -226,7 +226,9 @@ describe('parseCafeForm', () => {
 		hoursKk: 'Күн сайын 10:00–22:00',
 		hoursRu: 'Ежедневно 10:00–22:00',
 		phone: '+7 700 000 00 00',
-		twoGisUrl: 'go.2gis.com/abcde'
+		twoGisUrl: 'go.2gis.com/abcde',
+		notesKk: 'Өз тамағыңызбен кіруге болмайды.\r\nҚызмет көрсету 10%',
+		notesRu: '  У нас со своей едой нельзя. \n\n\n Обслуживание  10%\n'
 	};
 
 	it('parses and tidies the details', () => {
@@ -238,13 +240,16 @@ describe('parseCafeForm', () => {
 				hoursKk: 'Күн сайын 10:00–22:00',
 				hoursRu: 'Ежедневно 10:00–22:00',
 				phone: '+7 700 000 00 00',
-				twoGisUrl: 'https://go.2gis.com/abcde'
+				twoGisUrl: 'https://go.2gis.com/abcde',
+				// One note per line, without blank lines in between.
+				notesKk: 'Өз тамағыңызбен кіруге болмайды.\nҚызмет көрсету 10%',
+				notesRu: 'У нас со своей едой нельзя.\nОбслуживание 10%'
 			}
 		});
 	});
 
 	it('stores empty fields as null', () => {
-		expect(parseCafeForm(form({ addressKk: '', phone: '  ' }))).toEqual({
+		expect(parseCafeForm(form({ addressKk: '', phone: '  ', notesKk: '\n \n' }))).toEqual({
 			ok: true,
 			value: {
 				addressKk: null,
@@ -252,15 +257,17 @@ describe('parseCafeForm', () => {
 				hoursKk: null,
 				hoursRu: null,
 				phone: null,
-				twoGisUrl: null
+				twoGisUrl: null,
+				notesKk: null,
+				notesRu: null
 			}
 		});
 	});
 
-	it('wants the address and the hours in both languages', () => {
-		expect(parseCafeForm(form({ ...filled, addressRu: '', hoursKk: '' }))).toEqual({
+	it('wants the address, the hours and the notes in both languages', () => {
+		expect(parseCafeForm(form({ ...filled, addressRu: '', hoursKk: '', notesRu: ' ' }))).toEqual({
 			ok: false,
-			errors: { addressRu: 'bothLanguages', hoursKk: 'bothLanguages' }
+			errors: { addressRu: 'bothLanguages', hoursKk: 'bothLanguages', notesRu: 'bothLanguages' }
 		});
 	});
 
@@ -271,12 +278,18 @@ describe('parseCafeForm', () => {
 					...filled,
 					addressKk: 'а'.repeat(201),
 					phone: 'call me',
-					twoGisUrl: 'https://maps.example/cafe'
+					twoGisUrl: 'https://maps.example/cafe',
+					notesRu: 'а'.repeat(401)
 				})
 			)
 		).toEqual({
 			ok: false,
-			errors: { addressKk: 'tooLong', phone: 'invalidPhone', twoGisUrl: 'invalid2gisUrl' }
+			errors: {
+				addressKk: 'tooLong',
+				phone: 'invalidPhone',
+				twoGisUrl: 'invalid2gisUrl',
+				notesRu: 'tooLong'
+			}
 		});
 	});
 });

@@ -161,11 +161,12 @@ Schema: `src/lib/server/db/schema.ts`. Prices are whole tenge. Every guest-facin
   and are shown as one card.
 - **`cafe_info`**: the cafe's contact details, a single row (`id` 1) created by the first save in
   the admin panel: `address_kk?`, `address_ru?`, `hours_kk?`, `hours_ru?` (free text), `phone?`,
-  `two_gis_url?`. Null means "not filled in": the menu leaves that line out.
+  `two_gis_url?`, and `notes_kk?`, `notes_ru?`: notes for guests such as "Обслуживание 10%", one
+  per line. Null means "not filled in": the menu leaves that line out.
 
 The database also has some guard rails. Prices can't be negative. A variant label must be given
-in both languages or in neither, and so must the address and the hours. A category that still has
-items can't be deleted.
+in both languages or in neither, and so must the address, the hours and the notes. A category that
+still has items can't be deleted.
 
 ### Seeding
 
@@ -178,8 +179,9 @@ migrations**:
 Wrangler records applied migrations in the `d1_migrations` table, so each database gets the seed
 exactly once. Running the remote migrate command again later can never overwrite menu changes.
 
-The cafe's address, hours and phone are not seeded: `0002_cafe_info.sql` only creates their
-table. They are typed in on the admin panel's "cafe details" page.
+The cafe's address, hours, phone and notes are not seeded: `0002_cafe_info.sql` only creates their
+table (and `0003_cafe_notes.sql` adds the notes). They are typed in on the admin panel's "cafe
+details" page.
 
 ### Changing the schema
 
@@ -358,7 +360,7 @@ and the orange (`#f79e45`) only ever carries dark text.
 ## Project structure
 
 ```
-├── drizzle/migrations/          SQL migrations (0000 schema, 0001 menu seed, 0002 cafe details) + metadata
+├── drizzle/migrations/          SQL migrations (0000 schema, 0001 menu seed, 0002 cafe details, 0003 notes) + metadata
 ├── print/                       Table card with the QR code (PDF, PNG) and the bare QR code
 ├── scripts/
 │   ├── build-fonts.py           Builds the subset web fonts
@@ -410,10 +412,12 @@ It works on a phone.
 - **Overview** (`/admin`): the cafe details at the top, then every category with its dishes.
   Reorder categories and dishes with ↑ ↓, mark a dish sold out or back in stock with one tap,
   rename, hide or delete a category (only an empty one), add categories and dishes.
-- **Cafe details** (`/admin/cafe`): address and opening hours in both languages, phone, and the
-  link to the cafe on 2GIS. They appear in the menu's header and footer; the phone becomes a
-  tap-to-call link. Every field is optional, and an empty one is left off the menu. The address
-  and the hours must be given in both languages or in neither. Only links to 2GIS are accepted.
+- **Cafe details** (`/admin/cafe`): address and opening hours in both languages, phone, the link
+  to the cafe on 2GIS, and notes for guests in both languages, one per line (e.g. "У нас со своей
+  едой нельзя." and "Обслуживание 10%"). They appear in the menu's header and footer, the notes
+  below the contacts with an ⓘ icon; the phone becomes a tap-to-call link. Every field is
+  optional, and an empty one is left off the menu. The address, the hours and the notes must be
+  given in both languages or in neither. Only links to 2GIS are accepted.
 - **Dish page** (`/admin/items/<id>`): category, names and descriptions in both languages, "in
   stock", and the prices. A dish has one or more variants (sizes or choices such as 1 л / 0,5 л),
   each with a label in both languages and a price in whole tenge, or "price on request". Labels are

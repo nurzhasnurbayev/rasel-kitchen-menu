@@ -30,6 +30,11 @@
 			{/if}
 		</p>
 	{/if}
+	{#if details.notes.length > 0}
+		<ul class="mt-4 space-y-0.5">
+			{#each details.notes as note, i (i)}<li>{note}</li>{/each}
+		</ul>
+	{/if}
 	<p class="mt-6">
 		<a
 			href="/{other}"

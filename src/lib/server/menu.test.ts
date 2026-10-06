@@ -95,7 +95,7 @@ describe('getMenuPage', () => {
 
 	it('has no cafe details until the admin saves them', async () => {
 		const { cafe } = await getMenuPage(setup(), 'kk');
-		expect(cafe).toEqual({ address: null, hours: null, phone: null, twoGisUrl: null });
+		expect(cafe).toEqual({ address: null, hours: null, phone: null, twoGisUrl: null, notes: [] });
 	});
 
 	it('returns the cafe details in the requested language', async () => {
@@ -106,18 +106,23 @@ describe('getMenuPage', () => {
 			hoursKk: 'Күн сайын 10:00–22:00',
 			hoursRu: 'Ежедневно 10:00–22:00',
 			phone: '+7 700 000 00 00',
-			twoGisUrl: null
+			twoGisUrl: null,
+			// Written straight to the database, blank lines would still be skipped.
+			notesKk: 'Өз тамағыңызбен кіруге болмайды.\n\n Қызмет көрсету 10% ',
+			notesRu: 'У нас со своей едой нельзя.\nОбслуживание 10%'
 		});
 
 		expect((await getMenuPage(db, 'kk')).cafe).toEqual({
 			address: 'Алматы қ., Абай даңғылы, 1',
 			hours: 'Күн сайын 10:00–22:00',
 			phone: '+7 700 000 00 00',
-			twoGisUrl: null
+			twoGisUrl: null,
+			notes: ['Өз тамағыңызбен кіруге болмайды.', 'Қызмет көрсету 10%']
 		});
 		expect((await getMenuPage(db, 'ru')).cafe).toMatchObject({
 			address: 'г. Алматы, пр. Абая, 1',
-			hours: 'Ежедневно 10:00–22:00'
+			hours: 'Ежедневно 10:00–22:00',
+			notes: ['У нас со своей едой нельзя.', 'Обслуживание 10%']
 		});
 	});
 });

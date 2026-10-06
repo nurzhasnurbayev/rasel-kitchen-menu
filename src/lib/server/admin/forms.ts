@@ -30,7 +30,9 @@ export const LIMITS = {
 	address: 200,
 	hours: 120,
 	phone: 40,
-	url: 300
+	url: 300,
+	/** All the notes in one language, newlines included. */
+	notes: 400
 } as const;
 
 export interface CategoryInput {
@@ -56,6 +58,9 @@ export interface CafeInput {
 	hoursRu: string | null;
 	phone: string | null;
 	twoGisUrl: string | null;
+	/** Notes for guests, one per line (e.g. "Обслуживание 10%"). */
+	notesKk: string | null;
+	notesRu: string | null;
 }
 
 export interface ItemInput {
@@ -244,10 +249,15 @@ export function parseCafeForm(form: FormData): Parsed<CafeInput> {
 	const addressRu = optionalText(form, 'addressRu', LIMITS.address, errors);
 	const hoursKk = optionalText(form, 'hoursKk', LIMITS.hours, errors);
 	const hoursRu = optionalText(form, 'hoursRu', LIMITS.hours, errors);
+	// One note per line; blank lines between them are dropped.
+	const noteLines = (value: string | null) => value?.split('\n').filter(Boolean).join('\n') || null;
+	const notesKk = noteLines(optionalText(form, 'notesKk', LIMITS.notes, errors));
+	const notesRu = noteLines(optionalText(form, 'notesRu', LIMITS.notes, errors));
 	// Guests read the menu in either language, and the database requires both or neither.
 	for (const [kkName, kk, ruName, ru] of [
 		['addressKk', addressKk, 'addressRu', addressRu],
-		['hoursKk', hoursKk, 'hoursRu', hoursRu]
+		['hoursKk', hoursKk, 'hoursRu', hoursRu],
+		['notesKk', notesKk, 'notesRu', notesRu]
 	] as const) {
 		if (!kk !== !ru) errors[kk ? ruName : kkName] ??= 'bothLanguages';
 	}
@@ -260,5 +270,8 @@ export function parseCafeForm(form: FormData): Parsed<CafeInput> {
 	if (link && !errors.twoGisUrl && !twoGisUrl) errors.twoGisUrl = 'invalid2gisUrl';
 
 	if (Object.keys(errors).length) return { ok: false, errors };
-	return { ok: true, value: { addressKk, addressRu, hoursKk, hoursRu, phone, twoGisUrl } };
+	return {
+		ok: true,
+		value: { addressKk, addressRu, hoursKk, hoursRu, phone, twoGisUrl, notesKk, notesRu }
+	};
 }
